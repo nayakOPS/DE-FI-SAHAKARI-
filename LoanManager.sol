@@ -9,6 +9,7 @@ contract LoanManager {
     struct Loan {
         address borrower;
         uint256 amount;
+        uint256 collateral;
         uint256 repaymentAmount;
         bool isApproved;
         bool isRepaid;
@@ -20,17 +21,21 @@ contract LoanManager {
     // Maps each borrower to an array of their loans.
     mapping(address => Loan[]) public loans;
 
+     uint256 public staticInterestRate = 5; // 5% interest rate
+
     // intializes the 'FundingPool' instance with the provided address
     constructor(address _fundingPoolAddress) {
         fundingPool = FundingPool(_fundingPoolAddress);
     }
 
+
     // Requesting a Loan
-    function requestLoan(uint256 _amount, uint256 _repaymentAmount) public {
-        // this require statmenet ensure that borrower has sufficient balance for collateral in fundingpool
-        require(fundingPool.getBalance(msg.sender) >= _amount, "Insufficient balance for collateral.");
+    function requestLoan(uint256 _amount, uint256 _collateral) public {
+      // this require statmenet ensure that borrower has sufficient balance for collateral in fundingpool
+        require(fundingPool.getBalance(msg.sender) >= _collateral, "Insufficient collateral balance.");
+        uint256 repaymentAmount = _amount + (_amount * staticInterestRate / 100);
         // for adding new loan request to the borrower's array of loans
-        loans[msg.sender].push(Loan(msg.sender, _amount, _repaymentAmount, false, false));
+        loans[msg.sender].push(Loan(msg.sender, _amount, _collateral, repaymentAmount, false, false));
     }
 
     // Approving a Loan

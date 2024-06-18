@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 contract MemberRegistry {
-    // this struct stores Member details: name, memberAddress, isRegistered
     struct Member {
         string name;
         address memberAddress;
@@ -10,18 +9,15 @@ contract MemberRegistry {
     }
 
     mapping(address => Member) public members;
-    // mapping is similar to dictionary of python
-    // we have address as key and struct Member as value
-    // this memmbers mapping would be like this after registration of members
-
+    //memmbers mapping would be like this after registration of members
     /* {
     members[0xABC...123]: Member("Alice", 0xABC...123, true),
     members[0xDEF...456]: Member("Bob", 0xDEF...456, true)
     } */
 
-    address[] public memberList;
+    address[] public memberList; //keeps the list of all the registered members
 
-    // Modifier to check if the sender is not already registered
+    // Modifier to check if the member is not already registered
     modifier notRegistered() {
         require(!members[msg.sender].isRegistered, "Member is already registered.");
         _;
@@ -34,7 +30,7 @@ contract MemberRegistry {
 
     // Function to register a new member
     function registerMember(string memory _name) public notRegistered{
-         // Check if the name is not empty
+        // Check if the name is not empty
         //  below bytes().length converts the string into bytes and then etrieves the length of those bytes.
         require(bytes(_name).length > 0, "Name cannot be empty.");
 

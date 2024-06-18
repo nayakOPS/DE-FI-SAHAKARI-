@@ -3,17 +3,12 @@ pragma solidity ^0.8.0;
 
 import "./MemberRegistry.sol";
 
-/* 
-This FundingPool.sol contract manages the funds deposited and withdrawn by registered members of the cooperative.
-This contract interacts with a MemberRegistry contract for verification of registered members 
- */
-
-
 
 contract FundingPool {
     // memberRegistry is the instance of contract MemberRegistry
     MemberRegistry memberRegistry;
     mapping(address => uint256) public balances;
+    uint256 public totalDeposits;
 
     /* 
     The FundingPool contract is initialized with the address of a MemberRegistry contract.
@@ -30,13 +25,15 @@ contract FundingPool {
         require(memberRegistry.getMember(msg.sender).isRegistered, "Only registered members can deposit.");
         // adding the ether amount to the pool
         balances[msg.sender] += msg.value;
+        totalDeposits += msg.value;
     }
 
-    // registered Mmber can withdraw
+    // registered Member can withdraw
     function withdraw(uint256 _amount) public {
         require(memberRegistry.getMember(msg.sender).isRegistered, "Only registered members can withdraw.");
         require(balances[msg.sender] >= _amount, "Insufficient balance.");
         balances[msg.sender] -= _amount;
+        totalDeposits -= _amount;
         payable(msg.sender).transfer(_amount);
     }
 
@@ -44,4 +41,7 @@ contract FundingPool {
     function getBalance(address _memberAddress) public view returns (uint256) {
         return balances[_memberAddress];
     }
+
+
+    // function related to distributing the inerest, ---need to work on it
 }
