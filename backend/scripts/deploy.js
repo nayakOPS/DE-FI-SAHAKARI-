@@ -2,7 +2,7 @@ const { ThirdwebSDK } = require("@thirdweb-dev/sdk");
 const { ethers } = require("hardhat");
 
 async function main() {
-    const sdk = new ThirdwebSDK("rinkeby");
+    const sdk = new ThirdwebSDK("sepolia");
     const wallet = sdk.getSigner();
     const deployer = new ethers.Wallet(wallet);
 
@@ -13,8 +13,10 @@ async function main() {
     await memberRegistry.deployed();
     console.log("MemberRegistry deployed to:", memberRegistry.address);
 
+    const usdcAddress = "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"; // USDC contract address
+
     const FundingPool = await ethers.getContractFactory("FundingPool");
-    const fundingPool = await FundingPool.deploy(memberRegistry.address);
+    const fundingPool = await FundingPool.deploy(memberRegistry.address, usdcAddress);
     await fundingPool.deployed();
     console.log("FundingPool deployed to:", fundingPool.address);
 

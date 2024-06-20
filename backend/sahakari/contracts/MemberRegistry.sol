@@ -17,9 +17,17 @@ contract MemberRegistry {
 
     address[] public memberList; //keeps the list of all the registered members
 
+    address public owner; // Address of the contract deployer
+
     // Modifier to check if the member is not already registered
     modifier notRegistered() {
         require(!members[msg.sender].isRegistered, "Member is already registered.");
+        _;
+    }
+
+    // Modifier to check if the caller is the owner
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Caller is not the owner.");
         _;
     }
 
@@ -28,6 +36,10 @@ contract MemberRegistry {
     // easy for searching specific events related to memberAddress
     event MemberRegistered(address indexed memberAddress, string name);
 
+    // Constructor to set the deployer as the initial owner
+    constructor() {
+        owner = msg.sender;
+    }
     // Function to register a new member
     function registerMember(string memory _name) public notRegistered{
         // Check if the name is not empty
@@ -44,15 +56,19 @@ contract MemberRegistry {
         memberList.push(msg.sender);
     }
 
-    // Function to get member details
-    function getMember(address _memberAddress) public view returns (Member memory) {
+    // Function to get member details (only callable by the owner)
+    function getMember(address _memberAddress) public view onlyOwner returns (Member memory) {
         return members[_memberAddress];
     }
 
 
-    // Function to get all members
-    function getAllMembers() public view returns (address[] memory) {
+    // Function to get all members (only callable by the owner)
+    function getAllMembers() public view onlyOwner returns (address[] memory) {
         // we can add functionalities like only certain role member cann access member details
         return memberList;
     }
+
+    // we can add function to transfer ownership of this contract
+
+    // USDC token address for the ethereum netwrok : Ethereum Sepolia	0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238
 }

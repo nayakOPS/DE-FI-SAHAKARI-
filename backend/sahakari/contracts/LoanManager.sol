@@ -9,7 +9,7 @@ contract LoanManager {
     struct Loan {
         address borrower;
         uint256 amount;
-        uint256 collateral;
+        uint256 ethCollateral;
         uint256 repaymentAmount;
         bool isApproved;
         bool isRepaid;
@@ -21,7 +21,7 @@ contract LoanManager {
     // Maps each borrower to an array of their loans.
     mapping(address => Loan[]) public loans;
 
-     uint256 public staticInterestRate = 5; // 5% interest rate
+    uint256 public staticInterestRate = 5; // 5% interest rate
 
     // intializes the 'FundingPool' instance with the provided address
     constructor(address _fundingPoolAddress) {
@@ -30,12 +30,12 @@ contract LoanManager {
 
 
     // Requesting a Loan
-    function requestLoan(uint256 _amount, uint256 _collateral) public {
+    function requestLoan(uint256 _amount, uint256 _ethCollateral) public {
       // this require statmenet ensure that borrower has sufficient balance for collateral in fundingpool
-        require(fundingPool.getBalance(msg.sender) >= _collateral, "Insufficient collateral balance.");
+        require(fundingPool.getEthBalance(msg.sender) >= _ethCollateral, "Insufficient collateral balance.");
         uint256 repaymentAmount = _amount + (_amount * staticInterestRate / 100);
         // for adding new loan request to the borrower's array of loans
-        loans[msg.sender].push(Loan(msg.sender, _amount, _collateral, repaymentAmount, false, false));
+        loans[msg.sender].push(Loan(msg.sender, _amount, _ethCollateral, repaymentAmount, false, false));
     }
 
     // Approving a Loan
@@ -52,24 +52,25 @@ contract LoanManager {
         Loan storage loan = loans[_borrower][_loanIndex];
         require(loan.isApproved, "Loan is not approved.");
         require(!loan.isRepaid, "Loan is already repaid.");
-        fundingPool.withdraw(loan.amount);
-        payable(_borrower).transfer(loan.amount);
+        fundingPool.withdrawETH(loan.amount);
+        //Transfer the loan amount in USDC from FundingPool to the borrower
+        require(fundingPool.usdc.transferFrom(from, to, amount),(_borrower, loan.amount), "Transfer failed.");
     }
 
 
     // function for allowing a borrower to repay the loan
-    function repayLoan(address _borrower, uint256 _loanIndex) public payable {
+     function repayLoan(address _borrower, uint256 _loanIndex) public {
         Loan storage loan = loans[_borrower][_loanIndex];
-        require(msg.value == loan.repaymentAmount, "Incorrect repayment amount.");
+        require(fundingPool.usdc.transferFrom(msg.sender, address(fundingPool), loan.repaymentAmount), "Transfer failed.");
         loan.isRepaid = true;
-        // deposits the repayment ammount into the FundingPool
-        fundingPool.deposit{value: msg.value}();
     }
 
     // function for returning the array of loans associated with the specific borrower
     function getLoans(address _borrower) public view returns (Loan[] memory) {
         return loans[_borrower];
     }
+
+    // Add collateral liquidation and more functionalities
 }
 
 
