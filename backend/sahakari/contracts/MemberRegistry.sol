@@ -69,6 +69,5 @@ contract MemberRegistry {
     }
 
     // we can add function to transfer ownership of this contract
-
     // USDC token address for the ethereum netwrok : Ethereum Sepolia	0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238
 }

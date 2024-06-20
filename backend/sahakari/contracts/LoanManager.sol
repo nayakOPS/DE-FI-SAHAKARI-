@@ -16,7 +16,7 @@ contract LoanManager {
     }
 
     // fundingPool is the instance of the contract to interact with
-    FundingPool fundingPool;
+    FundingPool public fundingPool;
 
     // Maps each borrower to an array of their loans.
     mapping(address => Loan[]) public loans;
@@ -46,22 +46,20 @@ contract LoanManager {
         loan.isApproved = true;
     }
 
-    // this disburseLoan transfer the loan amount from cooperative's funding pool to the borrower
     function disburseLoan(address _borrower, uint256 _loanIndex) public {
-        // retrieving the loan details from loans mapping using the borrower's address and the loan index
         Loan storage loan = loans[_borrower][_loanIndex];
         require(loan.isApproved, "Loan is not approved.");
         require(!loan.isRepaid, "Loan is already repaid.");
-        fundingPool.withdrawETH(loan.amount);
-        //Transfer the loan amount in USDC from FundingPool to the borrower
-        require(fundingPool.usdc.transferFrom(from, to, amount),(_borrower, loan.amount), "Transfer failed.");
+        fundingPool.withdrawETH(loan.ethCollateral);
+        require(fundingPool.usdcToken().transfer(_borrower, loan.amount), "Transfer failed.");
     }
 
-
     // function for allowing a borrower to repay the loan
-     function repayLoan(address _borrower, uint256 _loanIndex) public {
+     function repayLoan(address _borrower, uint256 _loanIndex, uint256 _amount) public {
         Loan storage loan = loans[_borrower][_loanIndex];
-        require(fundingPool.usdc.transferFrom(msg.sender, address(fundingPool), loan.repaymentAmount), "Transfer failed.");
+        require(loan.isApproved, "Loan is not approved.");
+        require(!loan.isRepaid, "Loan is already repaid.");
+        require(fundingPool.usdcToken().transferFrom(msg.sender, address(fundingPool), _amount), "Transfer failed.");
         loan.isRepaid = true;
     }
 
@@ -91,4 +89,4 @@ Calling getLoans with 0xABC...123 would return:
   Loan("Alice", 0xABC...123, 1000, 1100, true, false),
   Loan("Alice", 0xABC...123, 500, 550, false, false)
 ]
- */
+*/

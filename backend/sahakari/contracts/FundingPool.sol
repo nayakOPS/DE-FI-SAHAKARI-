@@ -6,22 +6,18 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // fundingPool contract allows registerd members to deposit and withdraw USDC tokens,keep track of each member balance
 contract FundingPool {
-    // usdc instance of the usdc token 
-    IERC20 public usdc;
-    // memberRegistry is the instance of contract MemberRegistry
-    MemberRegistry memberRegistry;
+    // usdc instance of the usdc token
+    IERC20 public usdcToken;
+    MemberRegistry public memberRegistry;
     mapping(address => uint256) public ethBalances;
     mapping(address => uint256) public usdcBalances;
     uint256 public totalEthDeposits;
     uint256 public totalUsdcDeposits;
 
-    /* 
-    The FundingPool contract is initialized with the address of a MemberRegistry contract.
-    This connection enables it to verify the membership status of users before processing deposit and withdrawal requests.
-     */
-    constructor(address _memberRegistryAddress, address usdcAddress) {
+   
+    constructor(address _memberRegistryAddress, address _usdcAddress) {
         memberRegistry = MemberRegistry(_memberRegistryAddress);
-         usdc = IERC20(usdcAddress);
+        usdcToken = IERC20(_usdcAddress);
     }
 
 
@@ -36,7 +32,7 @@ contract FundingPool {
 
       function depositUSDC(uint256 _amount) public {
         require(memberRegistry.getMember(msg.sender).isRegistered, "Only registered members can deposit.");
-        require(usdc.transferFrom(msg.sender, address(this), _amount), "Transfer failed.");
+        require(usdcToken.transferFrom(msg.sender, address(this), _amount), "Transfer failed.");
         usdcBalances[msg.sender] += _amount;
         totalUsdcDeposits += _amount;
     }
@@ -55,7 +51,7 @@ contract FundingPool {
         require(usdcBalances[msg.sender] >= _amount, "Insufficient balance.");
         usdcBalances[msg.sender] -= _amount;
         totalUsdcDeposits -= _amount;
-        require(usdc.transfer(msg.sender, _amount), "Transfer failed.");
+        require(usdcToken.transfer(msg.sender, _amount), "Transfer failed.");
     }
 
     //registered member can query thier balamce by calling the function , providing their address as the param
