@@ -16,9 +16,7 @@ contract MemberRegistry {
     } */
 
     address[] public memberList; //keeps the list of all the registered members
-
     address public owner; // Address of the contract deployer
-
     // Modifier to check if the member is not already registered
     modifier notRegistered() {
         require(!members[msg.sender].isRegistered, "Member is already registered.");
@@ -45,13 +43,10 @@ contract MemberRegistry {
         // Check if the name is not empty
         //  below bytes().length converts the string into bytes and then etrieves the length of those bytes.
         require(bytes(_name).length > 0, "Name cannot be empty.");
-
          // Update the mapping in blockchain storage
         members[msg.sender] = Member(_name, msg.sender, true);
-
         // Emit event for member registration
         emit MemberRegistered(msg.sender, _name);
-
         // Update the member list in blockchain storage
         memberList.push(msg.sender);
     }

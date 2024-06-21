@@ -20,8 +20,13 @@ contract LoanManager {
 
     // Maps each borrower to an array of their loans.
     mapping(address => Loan[]) public loans;
-
     uint256 public staticInterestRate = 5; // 5% interest rate
+
+
+    modifier onlyRegisteredMember() {
+        require(fundingPool.memberRegistry().getMember(msg.sender).isRegistered, "Only registered members can perform this action.");
+        _;
+    }
 
     // intializes the 'FundingPool' instance with the provided address
     constructor(address _fundingPoolAddress) {
@@ -67,7 +72,17 @@ contract LoanManager {
     function getLoans(address _borrower) public view returns (Loan[] memory) {
         return loans[_borrower];
     }
-
+    
+    function hasRepaidLoans(address _borrower) public view returns (bool) {
+        Loan[] memory userLoans = loans[_borrower];
+        for (uint256 i = 0; i < userLoans.length; i++) {
+            if (!userLoans[i].isRepaid) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
     // Add collateral liquidation and more functionalities
 }
 
