@@ -2,10 +2,12 @@
 pragma solidity ^0.8.0;
 
 import "./FundingPool.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
+
 
 // this LoanManager.sol contract handles loan requests, approvals, disbursements, and repayments. It also interacts with a FundingPool contract for managing funds.
-
-contract LoanManager {
+contract LoanManager is Ownable, Pausable{
     struct Loan {
         address borrower;
         uint256 amount;
@@ -17,10 +19,15 @@ contract LoanManager {
 
     // fundingPool is the instance of the contract to interact with
     FundingPool public fundingPool;
-
     // Maps each borrower to an array of their loans.
     mapping(address => Loan[]) public loans;
     uint256 public staticInterestRate = 5; // 5% interest rate
+
+    // Events
+    event LoanRequested(address indexed borrower, uint256 amount, uint256 ethCollateral, uint256 repaymentAmount);
+    event LoanApproved(address indexed borrower, uint256 loanIndex);
+    event LoanDisbursed(address indexed borrower, uint256 loanIndex, uint256 amount);
+    event LoanRepaid(address indexed borrower, uint256 loanIndex, uint256 amount);
 
 
     modifier onlyRegisteredMember() {
@@ -35,37 +42,41 @@ contract LoanManager {
 
 
     // Requesting a Loan
-    function requestLoan(uint256 _amount, uint256 _ethCollateral) public {
+    function requestLoan(uint256 _amount, uint256 _ethCollateral) public onlyRegisteredMember whenNotPaused{
       // this require statmenet ensure that borrower has sufficient balance for collateral in fundingpool
         require(fundingPool.getEthBalance(msg.sender) >= _ethCollateral, "Insufficient collateral balance.");
         uint256 repaymentAmount = _amount + (_amount * staticInterestRate / 100);
         // for adding new loan request to the borrower's array of loans
         loans[msg.sender].push(Loan(msg.sender, _amount, _ethCollateral, repaymentAmount, false, false));
+        emit LoanRequested(msg.sender, _amount, _ethCollateral, repaymentAmount);
     }
 
     // Approving a Loan
     // _loanIndex is the index of the loan in the borrower's loans array
-    function approveLoan(address _borrower, uint256 _loanIndex) public {
+    function approveLoan(address _borrower, uint256 _loanIndex) public onlyRegisteredMember whenNotPaused{
         Loan storage loan = loans[_borrower][_loanIndex];
         require(!loan.isApproved, "Loan is already approved.");
         loan.isApproved = true;
+        emit LoanApproved(_borrower, _loanIndex);
     }
 
-    function disburseLoan(address _borrower, uint256 _loanIndex) public {
+    function disburseLoan(address _borrower, uint256 _loanIndex) public onlyOwner whenNotPaused{
         Loan storage loan = loans[_borrower][_loanIndex];
         require(loan.isApproved, "Loan is not approved.");
         require(!loan.isRepaid, "Loan is already repaid.");
         fundingPool.withdrawETH(loan.ethCollateral);
         require(fundingPool.usdcToken().transfer(_borrower, loan.amount), "Transfer failed.");
+        emit LoanDisbursed(_borrower, _loanIndex, loan.amount);
     }
 
     // function for allowing a borrower to repay the loan
-     function repayLoan(address _borrower, uint256 _loanIndex, uint256 _amount) public {
+     function repayLoan(address _borrower, uint256 _loanIndex, uint256 _amount) public onlyRegisteredMember whenNotPaused{
         Loan storage loan = loans[_borrower][_loanIndex];
         require(loan.isApproved, "Loan is not approved.");
         require(!loan.isRepaid, "Loan is already repaid.");
         require(fundingPool.usdcToken().transferFrom(msg.sender, address(fundingPool), _amount), "Transfer failed.");
         loan.isRepaid = true;
+        emit LoanRepaid(_borrower, _loanIndex, _amount);
     }
 
     // function for returning the array of loans associated with the specific borrower
@@ -83,6 +94,16 @@ contract LoanManager {
         return true;
     }
     
+
+    // Pause and unpause functions for emergency stops
+    function pause() public onlyOwner {
+        _pause();
+    }
+
+    function unpause() public onlyOwner {
+        _unpause();
+    }
+
     // Add collateral liquidation and more functionalities
 }
 
