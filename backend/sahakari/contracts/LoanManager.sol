@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
 
+// LoanManager manages loan requests and repayments.
 // this LoanManager.sol contract handles loan requests, approvals, disbursements, and repayments. It also interacts with a FundingPool contract for managing funds.
 contract LoanManager is Ownable, Pausable, AccessControl{
     struct Loan {
@@ -16,6 +17,7 @@ contract LoanManager is Ownable, Pausable, AccessControl{
         uint256 repaymentAmount;
         bool isApproved;
         bool isRepaid;
+        uint256 dueDate;
     }
 
     // fundingPool is the instance of the contract to interact with
@@ -50,12 +52,20 @@ contract LoanManager is Ownable, Pausable, AccessControl{
 
 
     // Requesting a Loan
-    function requestLoan(uint256 _amount, uint256 _ethCollateral) public onlyRegisteredMember whenNotPaused{
+    function requestLoan(uint256 _amount, uint256 _ethCollateral, uint256 _dueDate) public onlyRegisteredMember whenNotPaused{
       // this require statmenet ensure that borrower has sufficient balance for collateral in fundingpool
         require(fundingPool.getEthBalance(msg.sender) >= _ethCollateral, "Insufficient collateral balance.");
         uint256 repaymentAmount = _amount + (_amount * staticInterestRate / 100);
         // for adding new loan request to the borrower's array of loans
-        loans[msg.sender].push(Loan(msg.sender, _amount, _ethCollateral, repaymentAmount, false, false));
+        loans[msg.sender].push(Loan({
+            borrower: msg.sender,
+            amount: _amount,
+            ethCollateral: _ethCollateral,
+            repaymentAmount: repaymentAmount,
+            isApproved: false,
+            isRepaid: false,
+            dueDate: _dueDate // 
+        }));
         emit LoanRequested(msg.sender, _amount, _ethCollateral, repaymentAmount);
     }
 
@@ -102,6 +112,9 @@ contract LoanManager is Ownable, Pausable, AccessControl{
         return true;
     }
     
+    function setLoanAsRepaid(address _borrower, uint256 _loanIndex) public onlyOwner {
+        loans[_borrower][_loanIndex].isRepaid = true;
+    }
 
     // Pause and unpause functions for emergency stops
     function pause() public onlyOwner {

@@ -4,17 +4,19 @@ pragma solidity ^0.8.0;
 import "./MemberRegistry.sol";
 import "./IERC20.sol";
 import "./LoanManager.sol";
+import "./FinanceProcessor.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
-
+// FundingPool manages deposits and balances
 // FundingPool contract allows registerd members to deposit and withdraw USDC tokens,keep track of each member balance
 contract FundingPool is Ownable, Pausable, AccessControl {
 
     IERC20 public usdcToken; // usdc instance of the usdc token
     MemberRegistry public memberRegistry;
     LoanManager public loanManager;
+    FinanceProcessor public financeProcessor;
 
     // Role definitions
     bytes32 public constant MEMBER_ROLE = keccak256("MEMBER_ROLE");
@@ -22,6 +24,7 @@ contract FundingPool is Ownable, Pausable, AccessControl {
     // Mappings to Track ETH and USDC balances of each member
     mapping(address => uint256) public ethBalances;
     mapping(address => uint256) public usdcBalances;
+    mapping(address => uint256) public usdcInterestAccrued; // Track USDC interest accrued for each member
 
     uint256 public totalEthDeposits;
     uint256 public totalUsdcDeposits;
@@ -32,6 +35,9 @@ contract FundingPool is Ownable, Pausable, AccessControl {
     event UsdcDeposited(address indexed member, uint256 amount);
     event EthWithdrawn(address indexed member, uint256 amount);
     event UsdcWithdrawn(address indexed member, uint256 amount);
+    event InterestPaid(address indexed member, uint256 amount);
+    event CollateralLiquidated(address indexed borrower, uint256 collateralAmount);
+
 
     // Modifier to check if the sender is a registered member, who have been assigned the 'MEMBER_ROLE'
     modifier onlyRegisteredMember() {
@@ -42,11 +48,13 @@ contract FundingPool is Ownable, Pausable, AccessControl {
     }
 
     // Constructor initializes the contract with addresses for the MemberRegistry and USDC contract Address
-    constructor(address _memberRegistryAddress, address _usdcAddress) {
+    constructor(address _memberRegistryAddress, address _usdcAddress, address _financeProcessorAddress) {
         memberRegistry = MemberRegistry(_memberRegistryAddress);
         usdcToken = IERC20(_usdcAddress);
+        financeProcessor = FinanceProcessor(_financeProcessorAddress);
 
         // Grant the contract deployer the admin role
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
@@ -108,6 +116,29 @@ contract FundingPool is Ownable, Pausable, AccessControl {
         return usdcBalances[_memberAddress];
     }
 
+     function distributeInterest() public onlyOwner {
+        financeProcessor.distributeInterest();
+    }
+
+    function payInterest(address _member) public onlyOwner {
+        uint256 interest = financeProcessor.getUSDCInterestAccrued(_member);
+        if (interest > 0) {
+            usdcBalances[_member] += interest;
+            emit InterestPaid(_member, interest);
+        }
+    }
+
+    function liquidateCollateral(address _borrower, uint256 _loanIndex) public onlyOwner {
+        financeProcessor.liquidateCollateral(_borrower, _loanIndex);
+    }
+
+    function addUSDCBalance(address _member, uint256 _amount) external {
+        usdcBalances[_member] += _amount;
+    }
+
+    function getUSDCInterestAccrued(address _member) external view returns (uint256) {
+        return usdcInterestAccrued[_member];
+    }
     // Pause and unpause functions for emergency stops
     function pause() public onlyOwner {
         _pause();
