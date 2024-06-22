@@ -4,10 +4,11 @@ pragma solidity ^0.8.0;
 import "./FundingPool.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 
 
 // this LoanManager.sol contract handles loan requests, approvals, disbursements, and repayments. It also interacts with a FundingPool contract for managing funds.
-contract LoanManager is Ownable, Pausable{
+contract LoanManager is Ownable, Pausable, AccessControl{
     struct Loan {
         address borrower;
         uint256 amount;
@@ -23,6 +24,9 @@ contract LoanManager is Ownable, Pausable{
     mapping(address => Loan[]) public loans;
     uint256 public staticInterestRate = 5; // 5% interest rate
 
+    // Role definitions
+    bytes32 public constant MEMBER_ROLE = keccak256("MEMBER_ROLE");
+
     // Events
     event LoanRequested(address indexed borrower, uint256 amount, uint256 ethCollateral, uint256 repaymentAmount);
     event LoanApproved(address indexed borrower, uint256 loanIndex);
@@ -32,12 +36,16 @@ contract LoanManager is Ownable, Pausable{
 
     modifier onlyRegisteredMember() {
         require(fundingPool.memberRegistry().getMember(msg.sender).isRegistered, "Only registered members can perform this action.");
+        require(hasRole(MEMBER_ROLE, msg.sender), "Caller is not a registered member.");
         _;
     }
 
     // intializes the 'FundingPool' instance with the provided address
     constructor(address _fundingPoolAddress) {
         fundingPool = FundingPool(_fundingPoolAddress);
+
+        // Grant the contract deployer the admin role
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
 

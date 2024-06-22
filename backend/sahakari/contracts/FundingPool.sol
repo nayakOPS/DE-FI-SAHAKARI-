@@ -6,14 +6,18 @@ import "./IERC20.sol";
 import "./LoanManager.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 
 
 // FundingPool contract allows registerd members to deposit and withdraw USDC tokens,keep track of each member balance
-contract FundingPool is Ownable, Pausable {
+contract FundingPool is Ownable, Pausable, AccessControl {
 
     IERC20 public usdcToken; // usdc instance of the usdc token
     MemberRegistry public memberRegistry;
     LoanManager public loanManager;
+
+    // Role definitions
+    bytes32 public constant MEMBER_ROLE = keccak256("MEMBER_ROLE");
 
     // Mappings to Track ETH and USDC balances of each member
     mapping(address => uint256) public ethBalances;
@@ -29,9 +33,11 @@ contract FundingPool is Ownable, Pausable {
     event EthWithdrawn(address indexed member, uint256 amount);
     event UsdcWithdrawn(address indexed member, uint256 amount);
 
-    // Modifier to check if the sender is a registered member
+    // Modifier to check if the sender is a registered member, who have been assigned the 'MEMBER_ROLE'
     modifier onlyRegisteredMember() {
         require(memberRegistry.getMember(msg.sender).isRegistered, "Only registered members can perform this action.");
+        // the sender must have been granted the 'MEMBER_ROLE' 
+        require(hasRole(MEMBER_ROLE, msg.sender), "Caller is not a registered member.");
         _;
     }
 
@@ -39,8 +45,15 @@ contract FundingPool is Ownable, Pausable {
     constructor(address _memberRegistryAddress, address _usdcAddress) {
         memberRegistry = MemberRegistry(_memberRegistryAddress);
         usdcToken = IERC20(_usdcAddress);
+
+        // Grant the contract deployer the admin role
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
+    // Function to assign MEMBER_ROLE to a registered member, by an admin
+    function registerMember(address _member) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        grantRole(MEMBER_ROLE, _member);
+    }
 
     // Members can deposit ETH into the pool as collateral
     function depositETH() public payable onlyRegisteredMember whenNotPaused{
