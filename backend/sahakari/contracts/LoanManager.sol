@@ -5,11 +5,13 @@ import "./FundingPool.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import "./EthPriceConsumerV3.sol";
 
 
-// LoanManager manages loan requests and repayments.
+
 // this LoanManager.sol contract handles loan requests, approvals, disbursements, and repayments. It also interacts with a FundingPool contract for managing funds.
 contract LoanManager is Ownable, Pausable, AccessControl{
+    EthPriceConsumerV3 internal priceConsumer; // creating a state var of type of PriceConsumerV3 which holds instance of the  PriceConsumerV3 contract.
     struct Loan {
         address borrower;
         uint256 amount;
@@ -25,6 +27,8 @@ contract LoanManager is Ownable, Pausable, AccessControl{
     // Maps each borrower to an array of their loans.
     mapping(address => Loan[]) public loans;
     uint256 public staticInterestRate = 5; // 5% interest rate
+    uint256 public ethToUsdcRate; // ETH to USDC exchange rate
+
 
     // Role definitions
     bytes32 public constant MEMBER_ROLE = keccak256("MEMBER_ROLE");
@@ -43,19 +47,34 @@ contract LoanManager is Ownable, Pausable, AccessControl{
     }
 
     // intializes the 'FundingPool' instance with the provided address
-    constructor(address _fundingPoolAddress) {
+    constructor(address _fundingPoolAddress, address _priceConsumerAddress) {
         fundingPool = FundingPool(_fundingPoolAddress);
-
+        priceConsumer = PriceConsumerV3(_priceConsumerAddress); // pass the contract address of the EthPriceConsumerV3 contract addres
+        
         // Grant the contract deployer the admin role
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
+    // Set ETH to USDC rate using the EthPriceConsumerV3 contract
+    function setEthToUsdcRate() public onlyOwner {
+        int ethPriceInUsd = priceConsumer.getLatestPrice();
+        require(ethPriceInUsd > 0, "Invalid price from oracle");
+
+        // Since 1 USDC is equivalent to 1 USD, the rate is the same as the price in USD
+        ethToUsdcRate = uint256(ethPriceInUsd);
+    }
 
     // Requesting a Loan
     function requestLoan(uint256 _amount, uint256 _ethCollateral, uint256 _dueDate) public onlyRegisteredMember whenNotPaused{
       // this require statmenet ensure that borrower has sufficient balance for collateral in fundingpool
         require(fundingPool.getEthBalance(msg.sender) >= _ethCollateral, "Insufficient collateral balance.");
+        // if 50 usdc loan taken repayment amount is 55
         uint256 repaymentAmount = _amount + (_amount * staticInterestRate / 100);
+
+         // Transfer ETH collateral to FundingPool
+        //  The special syntax {value: amount} is used to send Ether along with the function call
+        fundingPool.depositCollateral{value: _ethCollateral}(msg.sender);
+
         // for adding new loan request to the borrower's array of loans
         loans[msg.sender].push(Loan({
             borrower: msg.sender,
@@ -78,11 +97,13 @@ contract LoanManager is Ownable, Pausable, AccessControl{
         emit LoanApproved(_borrower, _loanIndex);
     }
 
+    // transfer loan amount from sahakari(contract owner) to the borrower, transfer usdc that was request and approved as a loan to the borrower's address
     function disburseLoan(address _borrower, uint256 _loanIndex) public onlyOwner whenNotPaused{
         Loan storage loan = loans[_borrower][_loanIndex];
         require(loan.isApproved, "Loan is not approved.");
         require(!loan.isRepaid, "Loan is already repaid.");
-        fundingPool.withdrawETH(loan.ethCollateral);
+
+        // Transfer the loan amount in USDC from the FundingPool to the borrower
         require(fundingPool.usdcToken().transfer(_borrower, loan.amount), "Transfer failed.");
         emit LoanDisbursed(_borrower, _loanIndex, loan.amount);
     }
@@ -102,10 +123,15 @@ contract LoanManager is Ownable, Pausable, AccessControl{
         return loans[_borrower];
     }
     
+
+    // to check wether a borrower has repaid all thier outstanding loans
     function hasRepaidLoans(address _borrower) public view returns (bool) {
+        // fetches the list of loans associated with the borrower
         Loan[] memory userLoans = loans[_borrower];
+        // iterate through all the loans associated with a borrower and checks their repayment status
         for (uint256 i = 0; i < userLoans.length; i++) {
             if (!userLoans[i].isRepaid) {
+                // if any loan found that is not repaid returns false
                 return false;
             }
         }
@@ -124,8 +150,6 @@ contract LoanManager is Ownable, Pausable, AccessControl{
     function unpause() public onlyOwner {
         _unpause();
     }
-
-    // Add collateral liquidation and more functionalities
 }
 
 

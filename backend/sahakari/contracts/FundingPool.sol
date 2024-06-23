@@ -37,6 +37,7 @@ contract FundingPool is Ownable, Pausable, AccessControl {
     event UsdcWithdrawn(address indexed member, uint256 amount);
     event InterestPaid(address indexed member, uint256 amount);
     event CollateralLiquidated(address indexed borrower, uint256 collateralAmount);
+    event MemberRegistered(address indexed member);
 
 
     // Modifier to check if the sender is a registered member, who have been assigned the 'MEMBER_ROLE'
@@ -48,19 +49,20 @@ contract FundingPool is Ownable, Pausable, AccessControl {
     }
 
     // Constructor initializes the contract with addresses for the MemberRegistry and USDC contract Address
-    constructor(address _memberRegistryAddress, address _usdcAddress, address _financeProcessorAddress) {
+    constructor(address _memberRegistryAddress, address _usdcAddress,address _loanManagerAddress, address _financeProcessorAddress) {
         memberRegistry = MemberRegistry(_memberRegistryAddress);
         usdcToken = IERC20(_usdcAddress);
+        loanManager = LoanManager(_loanManagerAddress);
         financeProcessor = FinanceProcessor(_financeProcessorAddress);
 
         // Grant the contract deployer the admin role
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
     // Function to assign MEMBER_ROLE to a registered member, by an admin
     function registerMember(address _member) public onlyRole(DEFAULT_ADMIN_ROLE) {
         grantRole(MEMBER_ROLE, _member);
+        emit MemberRegistered(_member);
     }
 
     // Members can deposit ETH into the pool as collateral
@@ -85,7 +87,8 @@ contract FundingPool is Ownable, Pausable, AccessControl {
     // Members can withdraw ETH from the funding-pool if they have paid their loans
     function withdrawETH(uint256 _amount) public onlyRegisteredMember whenNotPaused{
         require(ethBalances[msg.sender] >= _amount, "Insufficient balance.");
-         require(loanManager.hasRepaidLoans(msg.sender), "Outstanding loan must be repaid before withdrawing.");
+        // ensures that borrowers can only withdraw their collateral if they have repaid all their loans
+        require(loanManager.hasRepaidLoans(msg.sender), "Outstanding loan must be repaid before withdrawing.");
         ethBalances[msg.sender] -= _amount;
         totalEthDeposits -= _amount;
         // Transfer the requested amount of ETH to the sender
@@ -105,6 +108,13 @@ contract FundingPool is Ownable, Pausable, AccessControl {
         emit UsdcWithdrawn(msg.sender, _amount);
     }
 
+
+    function depositCollateral(address _member) public payable onlyRegisteredMember whenNotPaused {
+        ethBalances[_member] += msg.value;
+        totalEthDeposits += msg.value;
+        emit EthDeposited(_member, msg.value);
+    }
+
     // Members can query their ETH balance by providing their address
     function getEthBalance(address _memberAddress) public view returns (uint256) {
         return ethBalances[_memberAddress];
@@ -120,6 +130,7 @@ contract FundingPool is Ownable, Pausable, AccessControl {
         financeProcessor.distributeInterest();
     }
 
+    // Pay interest to a specific member using the finance processor
     function payInterest(address _member) public onlyOwner {
         uint256 interest = financeProcessor.getUSDCInterestAccrued(_member);
         if (interest > 0) {
@@ -128,14 +139,17 @@ contract FundingPool is Ownable, Pausable, AccessControl {
         }
     }
 
+    // Liquidate collateral for a specific borrower and loan index using the finance processor
     function liquidateCollateral(address _borrower, uint256 _loanIndex) public onlyOwner {
         financeProcessor.liquidateCollateral(_borrower, _loanIndex);
     }
 
+     // Add USDC balance for a member (external call)
     function addUSDCBalance(address _member, uint256 _amount) external {
         usdcBalances[_member] += _amount;
     }
 
+    // Get USDC interest accrued for a member (external view)
     function getUSDCInterestAccrued(address _member) external view returns (uint256) {
         return usdcInterestAccrued[_member];
     }

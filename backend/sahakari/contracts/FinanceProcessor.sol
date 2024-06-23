@@ -6,6 +6,10 @@ import "./LoanManager.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
+// import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
+// import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Factory.sol";
+
+
 
 
 // FinancialProcessor contract handles interest accrual, loan approvals, and collateral liquidation
@@ -69,6 +73,7 @@ contract FinanceProcessor is Ownable, Pausable, AccessControl {
     // Liquidates a borrower's collateral if the loan is overdue and not repaid.
     // Withdraws the collateral in ETH and converts it to USDC.
     function liquidateCollateral(address _borrower, uint256 _loanIndex) public onlyOwner {
+        // currently this does not include a mechanism to swap ETh for USDC
         LoanManager.Loan[] memory loans = loanManager.getLoans(_borrower); //accessing the array of loans first
         LoanManager.Loan memory loan = loans[_loanIndex]; //then accessing the specific loan using the index
 
@@ -90,9 +95,9 @@ contract FinanceProcessor is Ownable, Pausable, AccessControl {
     }
 
     //  returns ETH collateral for a specific loan.
-    function getEthCollateral(address _borrower, uint256 _loanIndex) public view returns (uint256) {
-        return loanManager.loans(_borrower, _loanIndex).ethCollateral;
-    }
+    // function getEthCollateral(address _borrower) public view returns (uint256) {
+    //     return loanManager.loans(_borrower);
+    // }
 }
 
 // explain what all these code is doing , and how it is connecting and processig with other relevant contract
