@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.19;
 
 import "./FundingPool.sol";
 import "./LoanManager.sol";
@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import  "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
-import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Factory.sol";
+import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol';
 
 
 
@@ -132,7 +132,7 @@ contract FinanceProcessor is Ownable, Pausable, AccessControl {
             liquidateCollateral(_borrower, _loanIndex);
         }
     }
-    
+
     //  returns ETH collateral for a specific loan.
     // function getEthCollateral(address _borrower) public view returns (uint256) {
     //     return loanManager.loans(_borrower);
