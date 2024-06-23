@@ -122,7 +122,17 @@ contract FinanceProcessor is Ownable, Pausable, AccessControl {
     function getUSDCInterestAccrued(address _member) public view returns (uint256) {
         return fundingPool.getUSDCInterestAccrued(_member);
     }
+    
+    // Checks loan status and liquidates collateral if overdue or not paid
+    function checkAndLiquidate(address _borrower, uint256 _loanIndex) external onlyOwner {
+        LoanManager.Loan[] memory loans = loanManager.getLoans(_borrower);
+        LoanManager.Loan memory loan = loans[_loanIndex];
 
+        if (!loan.isRepaid && block.timestamp > loan.dueDate) {
+            liquidateCollateral(_borrower, _loanIndex);
+        }
+    }
+    
     //  returns ETH collateral for a specific loan.
     // function getEthCollateral(address _borrower) public view returns (uint256) {
     //     return loanManager.loans(_borrower);
