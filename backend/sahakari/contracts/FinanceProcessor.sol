@@ -6,9 +6,8 @@ import "./LoanManager.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
-// import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
-// import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Factory.sol";
-
+import  "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
+import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Factory.sol";
 
 
 
@@ -22,6 +21,9 @@ contract FinanceProcessor is Ownable, Pausable, AccessControl {
 
     bytes32 public constant MEMBER_ROLE = keccak256("MEMBER_ROLE");
 
+    IUniswapV2Router02 public uniswapRouter;
+    IUniswapV2Factory public uniswapFactory;
+    address public usdcAddress; // Address of USDC token contract
 
     // this modifier ensure that the caller is a registered member with the 'MEMBER_ROLE
     modifier onlyRegisteredMember() {
@@ -39,6 +41,11 @@ contract FinanceProcessor is Ownable, Pausable, AccessControl {
         loanManager = LoanManager(_loanManagerAddress);
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(MEMBER_ROLE, msg.sender);
+
+        // Initialize Uniswap router and factory
+        uniswapRouter = IUniswapV2Router02(_routerAddress);
+        usdcAddress = _usdcAddress;
+        uniswapFactory = IUniswapV2Factory(uniswapRouter.factory());
     }
 
     // calculates daily interest on a members's USDC balance
@@ -69,6 +76,23 @@ contract FinanceProcessor is Ownable, Pausable, AccessControl {
         loanManager.repayLoan(_borrower, _loanIndex, _amount);
     }
 
+    // function to perform the swap of ETH for USDC tokens using Uniswap:
+    function swapEthForUsdc(uint256 _ethAmount) internal returns (uint256) {
+        address[] memory path = new address[](2);
+        path[0] = uniswapRouter.WETH(); // WETH address on the deployed network (could be different if not mainnet)
+        path[1] = usdcAddress;
+
+        // Perform the swap
+        uint256[] memory amounts = uniswapRouter.swapExactETHForTokens{value: _ethAmount}(
+            0, // accept any amount of USDC
+            path,
+            address(this), // receive tokens to this contract
+            block.timestamp + 3600 // 1 hour deadline
+        );
+
+        return amounts[1]; // Return amount of USDC received
+}
+
 
     // Liquidates a borrower's collateral if the loan is overdue and not repaid.
     // Withdraws the collateral in ETH and converts it to USDC.
@@ -82,8 +106,13 @@ contract FinanceProcessor is Ownable, Pausable, AccessControl {
 
         // Liquidate collateral
         fundingPool.withdrawETH(loan.ethCollateral);
-        fundingPool.depositUSDC(loan.ethCollateral);
-        loanManager.setLoanAsRepaid(_borrower, _loanIndex); // Assuming you have a function to update loan status
+        // Swap ETH for USDC
+        uint256 usdcReceived = swapEthForUsdc(loan.ethCollateral);
+        // Deposit received USDC into FundingPool
+        fundingPool.depositUSDC(usdcReceived);
+         // Mark loan as repaid
+        loanManager.setLoanAsRepaid(_borrower, _loanIndex);
+
         emit CollateralLiquidated(_borrower, _loanIndex, loan.ethCollateral);
     }
     
