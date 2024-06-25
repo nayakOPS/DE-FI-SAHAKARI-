@@ -27,7 +27,8 @@ contract EthPriceConsumerV3 {
 
         // Debugging: Check if the data is being fetched correctly
         require(price > 0, "Invalid price returned from Chainlink");
-        
+
         return price;
+        // returns the price of 1 ETH in USD
     }
 }

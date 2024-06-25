@@ -68,17 +68,17 @@ contract LoanManager is Ownable, Pausable, AccessControl{
     }
 
     // Add this internal function to calculate required ETH collateral
-    function calculateEthCollateral(uint256 _usdcAmount) internal returns (uint256) {
-        setEthToUsdcRate(); // Ensure the latest ETH to USDC rate is fetched
-
-        uint256 EthToUsdcRate = ethToUsdcRate; // Use the stored rate in this function
-        require(EthToUsdcRate > 0, "ETH to USDC rate not set");
-
-        uint256 ethCollateral = (_usdcAmount * 1e18) / EthToUsdcRate; // Convert USDC to ETH
-
+    function calculateEthCollateral(uint256 _usdcAmount) internal view returns (uint256) {
+        // Fetch the latest ETH to USD price from the price consumer
+        int ethPriceInUsd = priceConsumer.getLatestPrice();
+        // Ensure the price is positive
+        require(ethPriceInUsd > 0, "Invalid price from oracle");
+        // Convert int to uint for calculation (after the require check)
+        uint256 ethPrice = uint256(ethPriceInUsd);
+        // ETH price has 8 decimals, so adjust the calculation accordingly
+        uint256 ethCollateral = (_usdcAmount * 1e8 * 1e18) / ethPrice;
         // Apply collateralization ratio (150%)
         ethCollateral = ethCollateral + (ethCollateral * COLLATERALIZATION_RATIO / 100);
-
         return ethCollateral;
     }
 
