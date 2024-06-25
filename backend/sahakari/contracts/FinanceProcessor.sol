@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+// Original source file: https://github.com/Uniswap/v2-periphery/blob/master/contracts/interfaces/IUniswapV2Router02.sol
+// Original source file: https://github.com/Uniswap/v2-core/blob/master/contracts/interfaces/IUniswapV2Factory.sol
+pragma solidity 0.8.26;
+
 
 import "./FundingPool.sol";
 import "./LoanManager.sol";
@@ -7,7 +10,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import  "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
-import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol';
+import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
 
 
 
@@ -36,11 +39,11 @@ contract FinanceProcessor is Ownable, Pausable, AccessControl {
     event CollateralLiquidated(address indexed borrower, uint256 loanIndex, uint256 collateralAmount);//emitted when a borrowers collateral is liquidated
 
 
-    constructor(address _fundingPoolAddress, address _loanManagerAddress) {
+    constructor(address _fundingPoolAddress, address _loanManagerAddress, address _routerAddress, address _usdcAddress)  Ownable(msg.sender){
         fundingPool = FundingPool(_fundingPoolAddress);
         loanManager = LoanManager(_loanManagerAddress);
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _setupRole(MEMBER_ROLE, msg.sender);
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(MEMBER_ROLE, msg.sender);
 
         // Initialize Uniswap router and factory
         uniswapRouter = IUniswapV2Router02(_routerAddress);

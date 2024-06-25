@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity 0.8.26;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
@@ -26,9 +26,10 @@ contract MemberRegistry is Ownable, Pausable, AccessControl{
      // Event logging for emitting events
     event MemberRegistered(address indexed memberAddress, string name);
 
-     constructor() {
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _setupRole(MEMBER_ROLE, msg.sender);
+     constructor() Ownable(msg.sender) {
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(MEMBER_ROLE, msg.sender); // Setup MEMBER_ROLE as well
+        // grantRole(MEMBER_ROLE, msg.sender);
         transferOwnership(msg.sender); // Sets the deployer as the initial owner
     }
 

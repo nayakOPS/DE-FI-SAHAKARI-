@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity 0.8.26;
 
 import "./FundingPool.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -12,6 +12,7 @@ import "./EthPriceConsumerV3.sol";
 // this LoanManager.sol contract handles loan requests, approvals, disbursements, and repayments. It also interacts with a FundingPool contract for managing funds.
 contract LoanManager is Ownable, Pausable, AccessControl{
     EthPriceConsumerV3 internal priceConsumer; // creating a state var of type of PriceConsumerV3 which holds instance of the  PriceConsumerV3 contract.
+
     struct Loan {
         address borrower;
         uint256 amount;
@@ -28,6 +29,7 @@ contract LoanManager is Ownable, Pausable, AccessControl{
     mapping(address => Loan[]) public loans;
     uint256 public staticInterestRate = 5; // 5% interest rate
     uint256 public ethToUsdcRate; // ETH to USDC exchange rate
+    uint256 constant COLLATERALIZATION_RATIO = 150;
 
 
     // Role definitions
@@ -38,6 +40,7 @@ contract LoanManager is Ownable, Pausable, AccessControl{
     event LoanApproved(address indexed borrower, uint256 loanIndex);
     event LoanDisbursed(address indexed borrower, uint256 loanIndex, uint256 amount);
     event LoanRepaid(address indexed borrower, uint256 loanIndex, uint256 amount);
+    event CollateralReturned(address indexed borrower, uint256 indexed loanIndex, uint256 collateralAmount);
 
 
     modifier onlyRegisteredMember() {
@@ -47,12 +50,12 @@ contract LoanManager is Ownable, Pausable, AccessControl{
     }
 
     // intializes the 'FundingPool' instance with the provided address
-    constructor(address _fundingPoolAddress, address _priceConsumerAddress) {
+    constructor(address _fundingPoolAddress, address _priceConsumerAddress)  Ownable(msg.sender){
         fundingPool = FundingPool(_fundingPoolAddress);
-        priceConsumer = PriceConsumerV3(_priceConsumerAddress); // pass the contract address of the EthPriceConsumerV3 contract addres
+        priceConsumer = EthPriceConsumerV3(_priceConsumerAddress); // pass the contract address of the EthPriceConsumerV3 contract addres
         
         // Grant the contract deployer the admin role
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
     // Set ETH to USDC rate using the EthPriceConsumerV3 contract
@@ -64,28 +67,48 @@ contract LoanManager is Ownable, Pausable, AccessControl{
         ethToUsdcRate = uint256(ethPriceInUsd);
     }
 
+    // Add this internal function to calculate required ETH collateral
+    function calculateEthCollateral(uint256 _usdcAmount) internal returns (uint256) {
+        setEthToUsdcRate(); // Ensure the latest ETH to USDC rate is fetched
+
+        uint256 EthToUsdcRate = ethToUsdcRate; // Use the stored rate in this function
+        require(EthToUsdcRate > 0, "ETH to USDC rate not set");
+
+        uint256 ethCollateral = (_usdcAmount * 1e18) / EthToUsdcRate; // Convert USDC to ETH
+
+        // Apply collateralization ratio (150%)
+        ethCollateral = ethCollateral + (ethCollateral * COLLATERALIZATION_RATIO / 100);
+
+        return ethCollateral;
+    }
+
     // Requesting a Loan
-    function requestLoan(uint256 _amount, uint256 _ethCollateral, uint256 _dueDate) public onlyRegisteredMember whenNotPaused{
-      // this require statmenet ensure that borrower has sufficient balance for collateral in fundingpool
-        require(fundingPool.getEthBalance(msg.sender) >= _ethCollateral, "Insufficient collateral balance.");
+    function requestLoan(uint256 _amount, uint256 _dueDate) public onlyRegisteredMember whenNotPaused{
+        setEthToUsdcRate(); // Ensure the latest ETH to USDC rate is fetched
         // if 50 usdc loan taken repayment amount is 55
         uint256 repaymentAmount = _amount + (_amount * staticInterestRate / 100);
 
+        // Calculate required collateral
+        uint256 ethCollateral = calculateEthCollateral(_amount);
+
+        // this require statmenet ensure that borrower has sufficient balance for collateral in fundingpool
+        require(fundingPool.getEthBalance(msg.sender) >= ethCollateral, "Insufficient collateral balance.");
+
          // Transfer ETH collateral to FundingPool
         //  The special syntax {value: amount} is used to send Ether along with the function call
-        fundingPool.depositCollateral{value: _ethCollateral}(msg.sender);
+        fundingPool.depositCollateral{value: ethCollateral}(msg.sender);
 
         // for adding new loan request to the borrower's array of loans
         loans[msg.sender].push(Loan({
             borrower: msg.sender,
             amount: _amount,
-            ethCollateral: _ethCollateral,
+            ethCollateral: ethCollateral,
             repaymentAmount: repaymentAmount,
             isApproved: false,
             isRepaid: false,
             dueDate: _dueDate // 
         }));
-        emit LoanRequested(msg.sender, _amount, _ethCollateral, repaymentAmount);
+        emit LoanRequested(msg.sender, _amount, ethCollateral, repaymentAmount);
     }
 
     // Approving a Loan
@@ -137,6 +160,19 @@ contract LoanManager is Ownable, Pausable, AccessControl{
         }
         return true;
     }
+
+
+    function returnCollateral(address _borrower, uint256 _loanIndex) public onlyOwner whenNotPaused {
+        Loan storage loan = loans[_borrower][_loanIndex];
+        require(loan.isApproved, "Loan is not approved.");
+        require(loan.isRepaid, "Loan is not repaid.");
+
+        uint256 collateralAmount = loan.ethCollateral;
+        loan.ethCollateral = 0; // Reset the collateral to avoid double withdrawals
+        fundingPool.withdrawETH(collateralAmount);
+        emit CollateralReturned(_borrower, _loanIndex, collateralAmount);
+    }
+
     
     function setLoanAsRepaid(address _borrower, uint256 _loanIndex) public onlyOwner {
         loans[_borrower][_loanIndex].isRepaid = true;

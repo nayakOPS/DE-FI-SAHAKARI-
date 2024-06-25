@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity 0.8.26;
 
 import "./MemberRegistry.sol";
 import "./IERC20.sol";
@@ -49,15 +49,22 @@ contract FundingPool is Ownable, Pausable, AccessControl {
     }
 
     // Constructor initializes the contract with addresses for the MemberRegistry and USDC contract Address
-    constructor(address _memberRegistryAddress, address _usdcAddress,address _loanManagerAddress, address _financeProcessorAddress) {
+    constructor(address _memberRegistryAddress, address _usdcAddress)  Ownable(msg.sender){
         memberRegistry = MemberRegistry(_memberRegistryAddress);
         usdcToken = IERC20(_usdcAddress);
-        loanManager = LoanManager(_loanManagerAddress);
-        financeProcessor = FinanceProcessor(_financeProcessorAddress);
-
+       
         // Grant the contract deployer the admin role
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
+
+    function setLoanManager(address _loanManagerAddress) public onlyOwner {
+        loanManager = LoanManager(_loanManagerAddress);
+    }
+
+    function setFinanceProcessor(address _financeProcessorAddress) public onlyOwner {
+        financeProcessor = FinanceProcessor(_financeProcessorAddress);
+    }
+
 
     // Function to assign MEMBER_ROLE to a registered member, by an admin
     function registerMember(address _member) public onlyRole(DEFAULT_ADMIN_ROLE) {
