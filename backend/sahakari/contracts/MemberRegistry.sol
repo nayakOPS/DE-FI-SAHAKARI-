@@ -26,7 +26,7 @@ contract MemberRegistry is Ownable, Pausable, AccessControl{
      // Event logging for emitting events
     event MemberRegistered(address indexed memberAddress, string name);
 
-     constructor() Ownable(msg.sender) {
+     constructor(){
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(MEMBER_ROLE, msg.sender); // Setup MEMBER_ROLE as well
         // grantRole(MEMBER_ROLE, msg.sender);

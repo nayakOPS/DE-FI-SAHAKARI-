@@ -49,7 +49,7 @@ contract FundingPool is Ownable, Pausable, AccessControl {
     }
 
     // Constructor initializes the contract with addresses for the MemberRegistry and USDC contract Address
-    constructor(address _memberRegistryAddress, address _usdcAddress)  Ownable(msg.sender){
+    constructor(address _memberRegistryAddress, address _usdcAddress){
         memberRegistry = MemberRegistry(_memberRegistryAddress);
         usdcToken = IERC20(_usdcAddress);
        

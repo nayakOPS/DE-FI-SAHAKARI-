@@ -50,7 +50,7 @@ contract LoanManager is Ownable, Pausable, AccessControl{
     }
 
     // intializes the 'FundingPool' instance with the provided address
-    constructor(address _fundingPoolAddress, address _priceConsumerAddress)  Ownable(msg.sender){
+    constructor(address _fundingPoolAddress, address _priceConsumerAddress){
         fundingPool = FundingPool(_fundingPoolAddress);
         priceConsumer = EthPriceConsumerV3(_priceConsumerAddress); // pass the contract address of the EthPriceConsumerV3 contract addres
         

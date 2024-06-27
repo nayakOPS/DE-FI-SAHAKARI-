@@ -16,6 +16,8 @@ import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
 
 // FinancialProcessor contract handles interest accrual, loan approvals, and collateral liquidation
 contract FinanceProcessor is Ownable, Pausable, AccessControl {
+    // using SafeMath for uint256;
+
     FundingPool public fundingPool;
     LoanManager public loanManager;
 
@@ -39,7 +41,12 @@ contract FinanceProcessor is Ownable, Pausable, AccessControl {
     event CollateralLiquidated(address indexed borrower, uint256 loanIndex, uint256 collateralAmount);//emitted when a borrowers collateral is liquidated
 
 
-    constructor(address _fundingPoolAddress, address _loanManagerAddress, address _routerAddress, address _usdcAddress)  Ownable(msg.sender){
+    constructor(address _fundingPoolAddress, address _loanManagerAddress, address _routerAddress, address _usdcAddress){
+        require(_fundingPoolAddress != address(0), "Invalid FundingPool address");
+        require(_loanManagerAddress != address(0), "Invalid LoanManager address");
+        require(_routerAddress != address(0), "Invalid Uniswap router address");
+        require(_usdcAddress != address(0), "Invalid USDC address");
+        
         fundingPool = FundingPool(_fundingPoolAddress);
         loanManager = LoanManager(_loanManagerAddress);
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
