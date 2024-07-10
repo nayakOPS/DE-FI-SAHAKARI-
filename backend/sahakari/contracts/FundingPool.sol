@@ -5,30 +5,21 @@ import "./MemberRegistry.sol";
 import "./IERC20.sol";
 import "./LoanManager.sol";
 import "./FinanceProcessor.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
 
 // FundingPool manages deposits and balances
-// FundingPool contract allows registerd members to deposit and withdraw USDC tokens,keep track of each member balance
-contract FundingPool is Ownable, Pausable, AccessControl {
-
-    IERC20 public usdcToken; // usdc instance of the usdc token
+contract FundingPool {
+    IERC20 public usdcToken; // USDC token instance
     MemberRegistry public memberRegistry;
     LoanManager public loanManager;
     FinanceProcessor public financeProcessor;
 
-    // Role definitions
-    bytes32 public constant MEMBER_ROLE = keccak256("MEMBER_ROLE");
-
-    // Mappings to Track ETH and USDC balances of each member
+    // Mappings to track ETH and USDC balances of each member
     mapping(address => uint256) public ethBalances;
     mapping(address => uint256) public usdcBalances;
-    mapping(address => uint256) public usdcInterestAccrued; // Track USDC interest accrued for each member
+    mapping(address => uint256) public usdcInterestAccrued;
 
     uint256 public totalEthDeposits;
     uint256 public totalUsdcDeposits;
-
 
     // Events
     event EthDeposited(address indexed member, uint256 amount);
@@ -39,106 +30,89 @@ contract FundingPool is Ownable, Pausable, AccessControl {
     event CollateralLiquidated(address indexed borrower, uint256 collateralAmount);
     event MemberRegistered(address indexed member);
 
-
-    // Modifier to check if the sender is a registered member, who have been assigned the 'MEMBER_ROLE'
-    modifier onlyRegisteredMember() {
-        require(memberRegistry.getMember(msg.sender).isRegistered, "Only registered members can perform this action.");
-        // the sender must have been granted the 'MEMBER_ROLE' 
-        require(hasRole(MEMBER_ROLE, msg.sender), "Caller is not a registered member.");
-        _;
-    }
-
-    // Constructor initializes the contract with addresses for the MemberRegistry and USDC contract Address
-    constructor(address _memberRegistryAddress, address _usdcAddress){
+    // Constructor initializes the contract with addresses for the MemberRegistry and USDC contract
+    constructor(address _memberRegistryAddress, address _usdcAddress) {
         memberRegistry = MemberRegistry(_memberRegistryAddress);
         usdcToken = IERC20(_usdcAddress);
-       
-        // Grant the contract deployer the admin role
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    function setLoanManager(address _loanManagerAddress) public onlyOwner {
+    // Function to set the LoanManager contract address
+    function setLoanManager(address _loanManagerAddress) public {
         loanManager = LoanManager(_loanManagerAddress);
     }
 
-    function setFinanceProcessor(address _financeProcessorAddress) public onlyOwner {
+    // Function to set the FinanceProcessor contract address
+    function setFinanceProcessor(address _financeProcessorAddress) public {
         financeProcessor = FinanceProcessor(_financeProcessorAddress);
     }
 
-
-    // Function to assign MEMBER_ROLE to a registered member, by an admin
-    function registerMember(address _member) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        grantRole(MEMBER_ROLE, _member);
+    // Function to register a member
+    function registerMember(address _member) public {
+        require(memberRegistry.getMember(_member).isRegistered, "Member not registered.");
         emit MemberRegistered(_member);
     }
 
     // Members can deposit ETH into the pool as collateral
-    function depositETH() public payable onlyRegisteredMember whenNotPaused{
-        // Update the sender's ETH balance and the total ETH deposits in the pool
+    function depositETH() public payable {
         ethBalances[msg.sender] += msg.value;
         totalEthDeposits += msg.value;
         emit EthDeposited(msg.sender, msg.value);
     }
 
+    // Members can deposit USDC into the pool
+    function depositUSDC(uint256 _amount) public {
+         // Ensure the contract is approved to spend _amount USDC on behalf of msg.sender
+        require(usdcToken.allowance(msg.sender, address(this)) >= _amount, "Allowance not sufficient.");
 
-    // Members can deposit USDC into the funding pool
-    function depositUSDC(uint256 _amount) public onlyRegisteredMember whenNotPaused{
-        // Transfer USDC from the sender to this contract
         require(usdcToken.transferFrom(msg.sender, address(this), _amount), "Transfer failed.");
-        // Update the sender's USDC balance and the total USDC deposits in the pool
         usdcBalances[msg.sender] += _amount;
         totalUsdcDeposits += _amount;
         emit UsdcDeposited(msg.sender, _amount);
     }
 
-    // Members can withdraw ETH from the funding-pool if they have paid their loans
-    function withdrawETH(uint256 _amount) public onlyRegisteredMember whenNotPaused{
+    // Members can withdraw ETH from the pool if they have repaid their loans
+    function withdrawETH(uint256 _amount) public {
         require(ethBalances[msg.sender] >= _amount, "Insufficient balance.");
-        // ensures that borrowers can only withdraw their collateral if they have repaid all their loans
         require(loanManager.hasRepaidLoans(msg.sender), "Outstanding loan must be repaid before withdrawing.");
         ethBalances[msg.sender] -= _amount;
         totalEthDeposits -= _amount;
-        // Transfer the requested amount of ETH to the sender
         payable(msg.sender).transfer(_amount);
         emit EthWithdrawn(msg.sender, _amount);
     }
 
-
     // Members can withdraw USDC from the pool
-    function withdrawUSDC(uint256 _amount) public onlyRegisteredMember whenNotPaused{
+    function withdrawUSDC(uint256 _amount) public {
         require(usdcBalances[msg.sender] >= _amount, "Insufficient balance.");
-        // Update the sender's USDC balance and the total USDC deposits in the pool
         usdcBalances[msg.sender] -= _amount;
         totalUsdcDeposits -= _amount;
-        // Transfer the requested amount of USDC to the sender
         require(usdcToken.transfer(msg.sender, _amount), "Transfer failed.");
         emit UsdcWithdrawn(msg.sender, _amount);
     }
 
-
-    function depositCollateral(address _member) public payable onlyRegisteredMember whenNotPaused {
-        ethBalances[_member] += msg.value;
+    // Function to deposit collateral (ETH) for a member
+    function depositCollateral() public payable {
+        ethBalances[msg.sender] += msg.value;
         totalEthDeposits += msg.value;
-        emit EthDeposited(_member, msg.value);
+        emit EthDeposited(msg.sender, msg.value);
     }
 
-    // Members can query their ETH balance by providing their address
+    // Function to query ETH balance of a member
     function getEthBalance(address _memberAddress) public view returns (uint256) {
         return ethBalances[_memberAddress];
     }
 
-
-    // Members can query their USDC balance by providing their address
+    // Function to query USDC balance of a member
     function getUSDCBalance(address _memberAddress) public view returns (uint256) {
         return usdcBalances[_memberAddress];
     }
 
-     function distributeInterest() public onlyOwner {
+    // Function to distribute interest
+    function distributeInterest() public {
         financeProcessor.distributeInterest();
     }
 
-    // Pay interest to a specific member using the finance processor
-    function payInterest(address _member) public onlyOwner {
+    // Function to pay interest to a member
+    function payInterest(address _member) public {
         uint256 interest = financeProcessor.getUSDCInterestAccrued(_member);
         if (interest > 0) {
             usdcBalances[_member] += interest;
@@ -146,28 +120,19 @@ contract FundingPool is Ownable, Pausable, AccessControl {
         }
     }
 
-    // Liquidate collateral for a specific borrower and loan index using the finance processor
-    function liquidateCollateral(address _borrower, uint256 _loanIndex) public onlyOwner {
+    // Function to liquidate collateral for a borrower and loan index
+    function liquidateCollateral(address _borrower, uint256 _loanIndex) public {
         financeProcessor.liquidateCollateral(_borrower, _loanIndex);
     }
 
-     // Add USDC balance for a member (external call)
+    // Function to add USDC balance for a member
     function addUSDCBalance(address _member, uint256 _amount) external {
         usdcBalances[_member] += _amount;
     }
 
-    // Get USDC interest accrued for a member (external view)
+    // Function to get USDC interest accrued for a member
     function getUSDCInterestAccrued(address _member) external view returns (uint256) {
         return usdcInterestAccrued[_member];
     }
-    // Pause and unpause functions for emergency stops
-    function pause() public onlyOwner {
-        _pause();
-    }
 
-    function unpause() public onlyOwner {
-        _unpause();
-    }
-    
-    // function related to distributing the inerest, ---need to work on it
 }

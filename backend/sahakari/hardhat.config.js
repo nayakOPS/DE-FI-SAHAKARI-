@@ -12,6 +12,10 @@ module.exports = {
     },
   },
   networks: {
+    // sepolia: {
+    //   url: "https://sepolia.infura.io/v3/YOUR_INFURA_PROJECT_ID",
+    //   accounts: ["YOUR_PRIVATE_KEY"]
+    // },
     zksync_testnet: {
       url: "https://zksync2-testnet.zksync.dev",
       ethNetwork: "goerli",

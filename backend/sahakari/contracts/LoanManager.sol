@@ -2,15 +2,10 @@
 pragma solidity 0.8.26;
 
 import "./FundingPool.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
 import "./EthPriceConsumerV3.sol";
 
-
-
-// this LoanManager.sol contract handles loan requests, approvals, disbursements, and repayments. It also interacts with a FundingPool contract for managing funds.
-contract LoanManager is Ownable, Pausable, AccessControl{
+// This LoanManager.sol contract handles loan requests, approvals, disbursements, and repayments. It also interacts with a FundingPool contract for managing funds.
+contract LoanManager {
     EthPriceConsumerV3 internal priceConsumer; // creating a state var of type of PriceConsumerV3 which holds instance of the  PriceConsumerV3 contract.
 
     struct Loan {
@@ -31,10 +26,6 @@ contract LoanManager is Ownable, Pausable, AccessControl{
     uint256 public ethToUsdcRate; // ETH to USDC exchange rate
     uint256 constant COLLATERALIZATION_RATIO = 150;
 
-
-    // Role definitions
-    bytes32 public constant MEMBER_ROLE = keccak256("MEMBER_ROLE");
-
     // Events
     event LoanRequested(address indexed borrower, uint256 amount, uint256 ethCollateral, uint256 repaymentAmount);
     event LoanApproved(address indexed borrower, uint256 loanIndex);
@@ -42,24 +33,14 @@ contract LoanManager is Ownable, Pausable, AccessControl{
     event LoanRepaid(address indexed borrower, uint256 loanIndex, uint256 amount);
     event CollateralReturned(address indexed borrower, uint256 indexed loanIndex, uint256 collateralAmount);
 
-
-    modifier onlyRegisteredMember() {
-        require(fundingPool.memberRegistry().getMember(msg.sender).isRegistered, "Only registered members can perform this action.");
-        require(hasRole(MEMBER_ROLE, msg.sender), "Caller is not a registered member.");
-        _;
-    }
-
     // intializes the 'FundingPool' instance with the provided address
-    constructor(address _fundingPoolAddress, address _priceConsumerAddress){
+    constructor(address _fundingPoolAddress, address _priceConsumerAddress) {
         fundingPool = FundingPool(_fundingPoolAddress);
-        priceConsumer = EthPriceConsumerV3(_priceConsumerAddress); // pass the contract address of the EthPriceConsumerV3 contract addres
-        
-        // Grant the contract deployer the admin role
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        priceConsumer = EthPriceConsumerV3(_priceConsumerAddress); // pass the contract address of the EthPriceConsumerV3 contract address
     }
 
     // Set ETH to USDC rate using the EthPriceConsumerV3 contract
-    function setEthToUsdcRate() public onlyOwner {
+    function setEthToUsdcRate() public {
         int ethPriceInUsd = priceConsumer.getLatestPrice();
         require(ethPriceInUsd > 0, "Invalid price from oracle");
 
@@ -83,7 +64,7 @@ contract LoanManager is Ownable, Pausable, AccessControl{
     }
 
     // Requesting a Loan
-    function requestLoan(uint256 _amount, uint256 _dueDate) public onlyRegisteredMember whenNotPaused{
+    function requestLoan(uint256 _amount, uint256 _dueDate) external payable {
         setEthToUsdcRate(); // Ensure the latest ETH to USDC rate is fetched
         // if 50 usdc loan taken repayment amount is 55
         uint256 repaymentAmount = _amount + (_amount * staticInterestRate / 100);
@@ -96,7 +77,7 @@ contract LoanManager is Ownable, Pausable, AccessControl{
 
          // Transfer ETH collateral to FundingPool
         //  The special syntax {value: amount} is used to send Ether along with the function call
-        fundingPool.depositCollateral{value: ethCollateral}(msg.sender);
+        fundingPool.depositCollateral{value: ethCollateral}();
 
         // for adding new loan request to the borrower's array of loans
         loans[msg.sender].push(Loan({
@@ -113,7 +94,7 @@ contract LoanManager is Ownable, Pausable, AccessControl{
 
     // Approving a Loan
     // _loanIndex is the index of the loan in the borrower's loans array
-    function approveLoan(address _borrower, uint256 _loanIndex) public onlyRegisteredMember whenNotPaused{
+    function approveLoan(address _borrower, uint256 _loanIndex) public {
         Loan storage loan = loans[_borrower][_loanIndex];
         require(!loan.isApproved, "Loan is already approved.");
         loan.isApproved = true;
@@ -121,7 +102,7 @@ contract LoanManager is Ownable, Pausable, AccessControl{
     }
 
     // transfer loan amount from sahakari(contract owner) to the borrower, transfer usdc that was request and approved as a loan to the borrower's address
-    function disburseLoan(address _borrower, uint256 _loanIndex) public onlyOwner whenNotPaused{
+    function disburseLoan(address _borrower, uint256 _loanIndex) public {
         Loan storage loan = loans[_borrower][_loanIndex];
         require(loan.isApproved, "Loan is not approved.");
         require(!loan.isRepaid, "Loan is already repaid.");
@@ -132,7 +113,7 @@ contract LoanManager is Ownable, Pausable, AccessControl{
     }
 
     // function for allowing a borrower to repay the loan
-     function repayLoan(address _borrower, uint256 _loanIndex, uint256 _amount) public onlyRegisteredMember whenNotPaused{
+    function repayLoan(address _borrower, uint256 _loanIndex, uint256 _amount) public {
         Loan storage loan = loans[_borrower][_loanIndex];
         require(loan.isApproved, "Loan is not approved.");
         require(!loan.isRepaid, "Loan is already repaid.");
@@ -146,8 +127,7 @@ contract LoanManager is Ownable, Pausable, AccessControl{
         return loans[_borrower];
     }
     
-
-    // to check wether a borrower has repaid all thier outstanding loans
+    // to check whether a borrower has repaid all their outstanding loans
     function hasRepaidLoans(address _borrower) public view returns (bool) {
         // fetches the list of loans associated with the borrower
         Loan[] memory userLoans = loans[_borrower];
@@ -161,8 +141,7 @@ contract LoanManager is Ownable, Pausable, AccessControl{
         return true;
     }
 
-
-    function returnCollateral(address _borrower, uint256 _loanIndex) public onlyOwner whenNotPaused {
+    function returnCollateral(address _borrower, uint256 _loanIndex) public {
         Loan storage loan = loans[_borrower][_loanIndex];
         require(loan.isApproved, "Loan is not approved.");
         require(loan.isRepaid, "Loan is not repaid.");
@@ -173,37 +152,7 @@ contract LoanManager is Ownable, Pausable, AccessControl{
         emit CollateralReturned(_borrower, _loanIndex, collateralAmount);
     }
 
-    
-    function setLoanAsRepaid(address _borrower, uint256 _loanIndex) public onlyOwner {
+    function setLoanAsRepaid(address _borrower, uint256 _loanIndex) public {
         loans[_borrower][_loanIndex].isRepaid = true;
     }
-
-    // Pause and unpause functions for emergency stops
-    function pause() public onlyOwner {
-        _pause();
-    }
-
-    function unpause() public onlyOwner {
-        _unpause();
-    }
 }
-
-
-/* 
-Suppose we have three loans for two different borrowers:
-{
-  0xABC...123: [
-    Loan("Alice", 0xABC...123, 1000, 1100, true, false),
-    Loan("Alice", 0xABC...123, 500, 550, false, false)
-  ],
-  0xDEF...456: [
-    Loan("Bob", 0xDEF...456, 2000, 2200, true, true)
-  ]
-}
-
-Calling getLoans with 0xABC...123 would return:
-[
-  Loan("Alice", 0xABC...123, 1000, 1100, true, false),
-  Loan("Alice", 0xABC...123, 500, 550, false, false)
-]
-*/
