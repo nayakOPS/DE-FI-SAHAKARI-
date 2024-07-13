@@ -90,7 +90,7 @@ contract FundingPool {
     }
 
     // Function to deposit collateral (ETH) for a member
-    function depositCollateral() public payable {
+     function depositCollateral() external payable {
         ethBalances[msg.sender] += msg.value;
         totalEthDeposits += msg.value;
         emit EthDeposited(msg.sender, msg.value);

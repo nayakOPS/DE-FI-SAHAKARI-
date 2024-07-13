@@ -6,29 +6,42 @@ import { useEthPriceConsumerV3 } from '../../utils/useEthPriceConsumerV3';
 
 const MemberLoanRequest = () => {
   const { signer } = useWeb3();
-  const { requestLoan } = useLoanManager(signer);
+  const { calculateEthCollateral, requestLoan } = useLoanManager(signer);
   const { getLatestPrice } = useEthPriceConsumerV3(signer);
 
-  const [currentETHPrice, setCurrentETHPrice] = useState(0)
   const [amount, setAmount] = useState('');
-  const [dueDate, setDueDate] = useState('');
   const [ethCollateral, setEthCollateral] = useState('');
-  const [interestRate, setInterestRate] = useState('');
+  const [ethPrice, setEthPrice] = useState(null);
 
-  const calculateEthCollateral = async (_usdcAmount) => {
+  const fetchEthPrice = async () => {
     try {
-      const ethPrice = await getLatestPrice();
-      const usdcAmount = ethers.utils.parseUnits(_usdcAmount, 6);
-      // Calculate the required ETH collateral:
-    // 1. Multiply the USDC amount by 10^18 to scale it to 18 decimal places (ETH standard)
-    // 2. Multiply the scaled USDC amount by 150 to apply a 150% collateralization ratio
-    // 3. Divide the result by the current ETH price to convert it to an equivalent ETH value
-    // 4. Divide by 100 to adjust the final result to the correct percentage factor
-      setCurrentETHPrice(ethers.utils.formatEther(ethPrice));
-      const collateral = (usdcAmount.mul(ethers.utils.parseUnits('1', 18)).mul(150)).div(ethPrice).div(100);
-      setEthCollateral(ethers.utils.formatEther(collateral));
+      const price = await getLatestPrice();
+      setEthPrice(price);
     } catch (error) {
-      console.error(error);
+      console.error('Failed to fetch ETH price:', error);
+      alert('Failed to fetch ETH price.');
+    }
+  };
+
+  const handleAmountChange = async (e) => {
+    const value = e.target.value;
+    setAmount(value);
+    setEthCollateral(''); // Reset ETH collateral when amount changes
+  };
+
+  const handleCalculateEthCollateral = async () => {
+    try {
+      if (!amount) {
+        alert('Please enter an amount first.');
+        return;
+      }
+
+      const usdcAmount = ethers.utils.parseUnits(amount,8);
+      console.log("USDC:",usdcAmount.toString());
+      const collateralEth = await calculateEthCollateral(usdcAmount);
+      setEthCollateral(collateralEth);
+    } catch (error) {
+      console.error('Failed to calculate ETH collateral:', error);
       alert('Failed to calculate ETH collateral.');
     }
   };
@@ -36,18 +49,17 @@ const MemberLoanRequest = () => {
   const handleRequestLoan = async (e) => {
     e.preventDefault();
     try {
+      if (!amount || !ethCollateral) {
+        alert('Please calculate ETH collateral first.');
+        return;
+      }
       const usdcAmount = ethers.utils.parseUnits(amount, 6);
-      const dueDateTimestamp = Math.floor(new Date(dueDate).getTime() / 1000); // Convert dueDate to Unix timestamp
-
-      // pass as Big Number
       const ethCollateralBigNumber = ethers.utils.parseEther(ethCollateral);
 
-      await requestLoan(usdcAmount, dueDateTimestamp,{
-        value:ethCollateralBigNumber
-      });
-      alert('Loan request submitted successfully!');
+      const txHash = await requestLoan(usdcAmount, ethCollateralBigNumber);
+      alert(`Loan request submitted successfully! Transaction hash: ${txHash}`);
     } catch (error) {
-      console.error(error);
+      console.error('Failed to submit loan request:', error);
       alert('Failed to submit loan request.');
     }
   };
@@ -61,28 +73,27 @@ const MemberLoanRequest = () => {
           <input
             type="number"
             value={amount}
-            onChange={(e) => {
-              setAmount(e.target.value);
-              calculateEthCollateral(e.target.value);
-            }}
+            onChange={handleAmountChange}
             required
           />
         </div>
-        <div>
-          <label>Due Date:</label>
-          <input
-            type="date"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-            required
-          />
-        </div>
-        {ethCollateral && (
+        {ethPrice && (
           <div>
-            <p>Current ETH price: {currentETHPrice}</p>
-            <p>Required ETH Collateral: {ethCollateral}</p>
+            <p>Latest ETH Price: ${ethers.utils.formatUnits(ethPrice, 8)} USD</p>
           </div>
         )}
+        <p>click on calculate eth collateral for calculating eth collateral for {amount}$ USDC</p>
+        {ethCollateral && (
+          <div>
+            <p>Required ETH Collateral: {ethCollateral} ETH</p>
+          </div>
+        )}
+        <button type="button" onClick={fetchEthPrice}>
+          Fetch Latest ETH Price
+        </button>
+        <button type="button" onClick={handleCalculateEthCollateral}>
+          Calculate ETH Collateral
+        </button>
         <button type="submit">Request Loan</button>
       </form>
     </div>

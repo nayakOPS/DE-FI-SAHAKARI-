@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ethers } from 'ethers';
 import { useNavigate } from 'react-router-dom';
 import { useWeb3 } from '../utils/Web3Provider';
 import { useMemberRegistry } from '../utils/useMemberRegistry';
@@ -12,11 +13,7 @@ const MemberDashboard = () => {
   const [memberDetails, setMemberDetails] = useState(null);
   const [usdcBalance, setUsdcBalance] = useState(0);
   const [ethCollateral, setEthCollateral] = useState(0);
-
-  const [loanAmount, setLoanAmount] = useState('');
   const [usdcAmount, setUsdcAmount] = useState('');
-  const [collateral, setCollateral] = useState('');
-  const [terms, setTerms] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -95,7 +92,7 @@ const MemberDashboard = () => {
           <p>Name: {memberDetails.name}</p>
           <p>Address: {memberDetails.memberAddress}</p>
           <p>Registered: {memberDetails.isRegistered ? 'Yes' : 'No'}</p>
-          <p>USDC Balance: {usdcBalance}</p>
+          <p>USDC Balance: {ethers.utils.formatUnits(usdcBalance, 6)}</p>
           <p>ETH Collateral: {ethCollateral}</p>
           <input
             type="number"
@@ -104,10 +101,10 @@ const MemberDashboard = () => {
             placeholder="Enter USDC amount"
           />
           <button onClick={handleDepositUSDC}>Deposit USDC</button>
-      <div>
-        <p>You can get Loan when you deposit ETH, 150% eth collateral is needed in terms of comparison with USDC</p>
-        <button onClick={handleLoanRequestButton} >Request Loan</button>
-      </div>
+          <div>
+            <p>You can get Loan when you deposit ETH, 150% eth collateral is needed in terms of comparison with USDC</p>
+            <button onClick={handleLoanRequestButton}>Request Loan</button>
+          </div>
         </div>
       ) : (
         <div>

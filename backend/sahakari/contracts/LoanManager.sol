@@ -22,7 +22,7 @@ contract LoanManager {
     FundingPool public fundingPool;
     // Maps each borrower to an array of their loans.
     mapping(address => Loan[]) public loans;
-    uint256 public staticInterestRate = 5; // 5% interest rate
+    uint256 public staticInterestRate = 2; // 5% interest rate
     uint256 public ethToUsdcRate; // ETH to USDC exchange rate
     uint256 constant COLLATERALIZATION_RATIO = 150;
 
@@ -49,7 +49,7 @@ contract LoanManager {
     }
 
     // Add this internal function to calculate required ETH collateral
-    function calculateEthCollateral(uint256 _usdcAmount) internal view returns (uint256) {
+    function calculateEthCollateral(uint256 _usdcAmount) public view returns (uint256) {
         // Fetch the latest ETH to USD price from the price consumer
         int ethPriceInUsd = priceConsumer.getLatestPrice();
         // Ensure the price is positive
@@ -57,39 +57,40 @@ contract LoanManager {
         // Convert int to uint for calculation (after the require check)
         uint256 ethPrice = uint256(ethPriceInUsd);
         // ETH price has 8 decimals, so adjust the calculation accordingly
-        uint256 ethCollateral = (_usdcAmount * 1e8 * 1e18) / ethPrice;
-        // Apply collateralization ratio (150%)
-        ethCollateral = ethCollateral + (ethCollateral * COLLATERALIZATION_RATIO / 100);
+        uint256 collateralizedUsdcAmount = (_usdcAmount * COLLATERALIZATION_RATIO) / 100;
+        // Calculate the ETH collateral required
+        uint256 ethCollateral = (collateralizedUsdcAmount * 1e18) / ethPrice;
         return ethCollateral;
     }
 
     // Requesting a Loan
-    function requestLoan(uint256 _amount, uint256 _dueDate) external payable {
-        setEthToUsdcRate(); // Ensure the latest ETH to USDC rate is fetched
+    function requestLoan(uint256 _amount, uint256 _ethCollateral) external payable {
+        require(fundingPool.memberRegistry().getMember(msg.sender).isRegistered, "Only registered members can request loans.");
+        require(_amount > 0, "Loan amount must be greater than 0.");
+        // Calculate the due date (30 days from now)
+        uint256 due_Date = block.timestamp + 30 days;
+
         // if 50 usdc loan taken repayment amount is 55
         uint256 repaymentAmount = _amount + (_amount * staticInterestRate / 100);
 
-        // Calculate required collateral
-        uint256 ethCollateral = calculateEthCollateral(_amount);
-
         // this require statmenet ensure that borrower has sufficient balance for collateral in fundingpool
-        require(fundingPool.getEthBalance(msg.sender) >= ethCollateral, "Insufficient collateral balance.");
+        require(msg.value >= _ethCollateral, "Insufficient collateral balance.");
 
          // Transfer ETH collateral to FundingPool
         //  The special syntax {value: amount} is used to send Ether along with the function call
-        fundingPool.depositCollateral{value: ethCollateral}();
+        fundingPool.depositCollateral{value: msg.value}();
 
         // for adding new loan request to the borrower's array of loans
         loans[msg.sender].push(Loan({
             borrower: msg.sender,
             amount: _amount,
-            ethCollateral: ethCollateral,
+            ethCollateral: msg.value,
             repaymentAmount: repaymentAmount,
             isApproved: false,
             isRepaid: false,
-            dueDate: _dueDate // 
+            dueDate: due_Date 
         }));
-        emit LoanRequested(msg.sender, _amount, ethCollateral, repaymentAmount);
+        emit LoanRequested(msg.sender, _amount, _ethCollateral, repaymentAmount);
     }
 
     // Approving a Loan
@@ -127,6 +128,7 @@ contract LoanManager {
         return loans[_borrower];
     }
     
+
     // to check whether a borrower has repaid all their outstanding loans
     function hasRepaidLoans(address _borrower) public view returns (bool) {
         // fetches the list of loans associated with the borrower

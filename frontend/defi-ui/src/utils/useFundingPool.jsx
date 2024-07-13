@@ -1,19 +1,21 @@
 import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import FundingPoolABI from '../abis/FundingPool.json';
-import  ERC20ABI from '../abis/IERC20.json'
+import ERC20ABI from '../abis/IERC20.json';
 
-const contractAddress = "0xD73b496d29E3feF852fAF0f0A6a9b5E4aD5c1cfA";
+const contractAddress = "0x766De27627746dD5e451d521C8b6207f72876C09";
 const usdcAddress = "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238";
 
 export const useFundingPool = (signer, signerAddress) => {
   const [contract, setContract] = useState(null);
+  const [totalEth, setTotalEth] = useState(null);
+  const [totalUsdc, setTotalUsdc] = useState(null);
 
   useEffect(() => {
     if (signer) {
       const fundingPoolContract = new ethers.Contract(
-        contractAddress, 
-        FundingPoolABI.abi, 
+        contractAddress,
+        FundingPoolABI.abi,
         signer
       );
       setContract(fundingPoolContract);
@@ -30,7 +32,6 @@ export const useFundingPool = (signer, signerAddress) => {
       throw error;
     }
   };
-
 
   const getEthBalance = async (account) => {
     try {
@@ -62,8 +63,6 @@ export const useFundingPool = (signer, signerAddress) => {
       }
 
       const usdcContract = new ethers.Contract(usdcAddress, ERC20ABI.abi, signer);
-      console.log(signer.address);
-      console.log(signerAddress);
       const allowance = await usdcContract.allowance(signerAddress, contractAddress);
 
       // Check if allowance is sufficient
@@ -112,11 +111,33 @@ export const useFundingPool = (signer, signerAddress) => {
     }
   };
 
+  const fetchTotalDeposits = async () => {
+    try {
+      const ethDeposits = await contract.totalEthDeposits();
+      const usdcDeposits = await contract.totalUsdcDeposits();
+
+      // console.log("ETH Deposits Raw:", ethDeposits);
+      // console.log("USDC Deposits Raw:", usdcDeposits);
+
+      if (!ethDeposits || !usdcDeposits) {
+        throw new Error("Undefined deposit values");
+      }
+
+      setTotalEth(ethers.utils.formatEther(ethDeposits));
+      setTotalUsdc(ethers.utils.formatUnits(usdcDeposits, 6));
+    } catch (error) {
+      console.error("Error fetching total deposits:", error);
+    }
+  };
+
   return {
     getUSDCBalance,
     getEthBalance,
     depositUSDC,
     requestLoan,
     approveLoan,
+    fetchTotalDeposits,
+    totalEth,
+    totalUsdc
   };
 };
