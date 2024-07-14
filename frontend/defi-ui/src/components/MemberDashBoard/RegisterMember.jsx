@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useWeb3 } from "../../utils/Web3Provider";
 import { useMemberRegistry } from "../../utils/useMemberRegistry";
 import { useNavigate } from "react-router-dom";
+import Navigation from "../Navigations";
 
 const RegisterMember = () => {
   const { signer, account } = useWeb3();
@@ -21,6 +22,7 @@ const RegisterMember = () => {
 
   return (
     <div>
+      <Navigation/>
       <h1>Register Member</h1>
       <input
         type="text"

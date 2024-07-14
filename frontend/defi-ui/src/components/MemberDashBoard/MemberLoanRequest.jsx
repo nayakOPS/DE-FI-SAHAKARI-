@@ -3,6 +3,7 @@ import { ethers } from 'ethers';
 import { useWeb3 } from '../../utils/Web3Provider';
 import { useLoanManager } from '../../utils/useLoanManager';
 import { useEthPriceConsumerV3 } from '../../utils/useEthPriceConsumerV3';
+import Navigation from '../Navigations';
 
 const MemberLoanRequest = () => {
   const { signer } = useWeb3();
@@ -66,6 +67,7 @@ const MemberLoanRequest = () => {
 
   return (
     <div>
+      <Navigation/>
       <h2>Request a Loan</h2>
       <form onSubmit={handleRequestLoan}>
         <div>
