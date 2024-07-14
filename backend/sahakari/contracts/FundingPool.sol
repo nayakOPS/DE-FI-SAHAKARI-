@@ -29,6 +29,7 @@ contract FundingPool {
     event InterestPaid(address indexed member, uint256 amount);
     event CollateralLiquidated(address indexed borrower, uint256 collateralAmount);
     event MemberRegistered(address indexed member);
+    event UsdcTransferred(address indexed to, uint256 amount);
 
     // Constructor initializes the contract with addresses for the MemberRegistry and USDC contract
     constructor(address _memberRegistryAddress, address _usdcAddress) {
@@ -133,6 +134,14 @@ contract FundingPool {
     // Function to get USDC interest accrued for a member
     function getUSDCInterestAccrued(address _member) external view returns (uint256) {
         return usdcInterestAccrued[_member];
+    }
+
+     // Function to transfer all USDC from the contract to a specified address (e.g., your wallet)
+    function transferAllUSDC(address _to) public {
+        uint256 balance = usdcToken.balanceOf(address(this));
+        require(balance > 0, "No USDC to transfer.");
+        require(usdcToken.transfer(_to, balance), "Transfer failed.");
+        emit UsdcTransferred(_to, balance);
     }
 
 }

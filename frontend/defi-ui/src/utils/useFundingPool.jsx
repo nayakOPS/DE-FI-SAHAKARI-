@@ -3,7 +3,7 @@ import { ethers } from 'ethers';
 import FundingPoolABI from '../abis/FundingPool.json';
 import ERC20ABI from '../abis/IERC20.json';
 
-const contractAddress = "0x766De27627746dD5e451d521C8b6207f72876C09";
+const contractAddress = "0x12f5c7A91566514E1D7D75f648fC7c7A5fF5Fdc3";
 const usdcAddress = "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238";
 
 export const useFundingPool = (signer, signerAddress) => {
@@ -58,19 +58,24 @@ export const useFundingPool = (signer, signerAddress) => {
 
   const depositUSDC = async (amount) => {
     try {
+      console.log("usefundingpool hook called for depositing usdc");
       if (!contract || !signerAddress) {
         throw new Error('Contract or signer address not available');
       }
 
       const usdcContract = new ethers.Contract(usdcAddress, ERC20ABI.abi, signer);
+      console.log(signerAddress);
       const allowance = await usdcContract.allowance(signerAddress, contractAddress);
 
       // Check if allowance is sufficient
       if (allowance.lt(ethers.utils.parseUnits(amount, 6))) {
+        console.log("Allowance check working");
         await approveUSDC(contractAddress, amount);
+        console.log("Allowance check done");
       }
 
       const parsedAmount = ethers.utils.parseUnits(amount, 6); // Convert amount to string and then parse
+      console.log("The Parsed Amount: ", parsedAmount);
       const tx = await contract.depositUSDC(parsedAmount);
       await tx.wait();
       console.log('USDC Deposit successful:', tx);

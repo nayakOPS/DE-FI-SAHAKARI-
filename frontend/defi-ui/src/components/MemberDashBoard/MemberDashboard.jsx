@@ -67,12 +67,14 @@ const Dashboard = () => {
     navigate('/register-member');
   };
 
-  const handleDepositUSDC = async () => {
+  const handleDepositUSDC = async (e) => {
+    e.preventDefault();
     try {
       if (!usdcAmount) {
         console.error('USDC amount is required');
         return;
       }
+      console.log(`Depositing USDC amount: ${usdcAmount}`);
       await depositUSDC(usdcAmount); // Pass usdcAmount as string
       await fetchBalances(); // Refresh balances after deposit
       setUsdcAmount(''); // Clear the input field

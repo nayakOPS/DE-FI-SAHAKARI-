@@ -9,12 +9,14 @@ contract LoanManager {
     EthPriceConsumerV3 internal priceConsumer; // creating a state var of type of PriceConsumerV3 which holds instance of the  PriceConsumerV3 contract.
 
     struct Loan {
+        uint256 loanIndex;
         address borrower;
         uint256 amount;
         uint256 ethCollateral;
         uint256 repaymentAmount;
         bool isApproved;
         bool isRepaid;
+        bool isDisbursed;
         uint256 dueDate;
     }
 
@@ -80,14 +82,18 @@ contract LoanManager {
         //  The special syntax {value: amount} is used to send Ether along with the function call
         fundingPool.depositCollateral{value: msg.value}();
 
+        uint256 loanIndex = loans[msg.sender].length;
+
         // for adding new loan request to the borrower's array of loans
         loans[msg.sender].push(Loan({
+            loanIndex: loanIndex,
             borrower: msg.sender,
             amount: _amount,
             ethCollateral: msg.value,
             repaymentAmount: repaymentAmount,
             isApproved: false,
             isRepaid: false,
+            isDisbursed: false,
             dueDate: due_Date 
         }));
         emit LoanRequested(msg.sender, _amount, _ethCollateral, repaymentAmount);
@@ -107,9 +113,12 @@ contract LoanManager {
         Loan storage loan = loans[_borrower][_loanIndex];
         require(loan.isApproved, "Loan is not approved.");
         require(!loan.isRepaid, "Loan is already repaid.");
+        require(!loan.isDisbursed, "Loan is already disbursed.");
 
         // Transfer the loan amount in USDC from the FundingPool to the borrower
         require(fundingPool.usdcToken().transfer(_borrower, loan.amount), "Transfer failed.");
+
+        loan.isDisbursed = true;
         emit LoanDisbursed(_borrower, _loanIndex, loan.amount);
     }
 
@@ -117,6 +126,7 @@ contract LoanManager {
     function repayLoan(address _borrower, uint256 _loanIndex, uint256 _amount) public {
         Loan storage loan = loans[_borrower][_loanIndex];
         require(loan.isApproved, "Loan is not approved.");
+        require(loan.isDisbursed, "Loan is not disbursed.");
         require(!loan.isRepaid, "Loan is already repaid.");
         require(fundingPool.usdcToken().transferFrom(msg.sender, address(fundingPool), _amount), "Transfer failed.");
         loan.isRepaid = true;
@@ -128,6 +138,9 @@ contract LoanManager {
         return loans[_borrower];
     }
     
+    function getLoan(address _borrower, uint256 _loanIndex) public view returns (Loan memory) {
+        return loans[_borrower][_loanIndex];
+    }
 
     // to check whether a borrower has repaid all their outstanding loans
     function hasRepaidLoans(address _borrower) public view returns (bool) {
@@ -147,6 +160,7 @@ contract LoanManager {
         Loan storage loan = loans[_borrower][_loanIndex];
         require(loan.isApproved, "Loan is not approved.");
         require(loan.isRepaid, "Loan is not repaid.");
+        // require(!loan.isDisbursed, "Loan is already disbursed.");
 
         uint256 collateralAmount = loan.ethCollateral;
         loan.ethCollateral = 0; // Reset the collateral to avoid double withdrawals

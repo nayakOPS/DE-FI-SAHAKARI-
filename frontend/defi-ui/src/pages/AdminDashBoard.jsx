@@ -107,13 +107,15 @@ const AdminDashboard = () => {
 
   const formatLoanDetails = (loanResponse) => {
     return loanResponse.map((loan) => ({
-      borrower: loan[0], // Borrower address
-      amount: ethers.utils.formatUnits(loan.amount, 6), // Loan amount in USDC
-      ethCollateral: ethers.utils.formatEther(loan[2]), // ETH collateral
-      repaymentAmount: ethers.utils.formatUnits(loan.repaymentAmount,6), // Repayment amount in USDC
-      isApproved: loan[4], // Approval status
-      isRepaid: loan[5], // Repayment status
-      dueDate: new Date(loan[6].toNumber() * 1000).toLocaleDateString() // Due date
+      LoanIndex: loan.loanIndex.toNumber(), // Convert BigNumber to number
+      borrower: loan.borrower,
+      amount: ethers.utils.formatUnits(loan.amount, 6), // Format amount using ethers.js
+      ethCollateral: ethers.utils.formatEther(loan.ethCollateral), // Format ETH collateral using ethers.js
+      repaymentAmount: ethers.utils.formatUnits(loan.repaymentAmount, 6), // Format repayment amount using ethers.js
+      isApproved: loan.isApproved,
+      isRepaid: loan.isRepaid,
+      isDisbursed: loan.isDisbursed,
+      dueDate: new Date(loan[8].toNumber() * 1000).toLocaleDateString() // Due date
     }));
   };
 
@@ -160,11 +162,13 @@ const AdminDashboard = () => {
                 {loanDetails[member.memberAddress] ? (
                   loanDetails[member.memberAddress].map((loan, idx) => (
                     <div key={idx}>
+                      <p>Loan Index: {loan.LoanIndex}</p>
                       <p>Loan Amount: {loan.amount} USDC</p>
                       <p>ETH Collateral: {loan.ethCollateral} ETH</p>
                       <p>Repayment Amount: {loan.repaymentAmount} USDC</p>
                       <p>Due Date: {loan.dueDate}</p>
                       <p>Approved: {loan.isApproved ? "Yes" : "No"}</p>
+                      <p>Disbursed: {loan.isDisbursed ? "Yes" : "No"}</p>
                       <p>Repaid: {loan.isRepaid ? "Yes" : "No"}</p>
                     </div>
                   ))
