@@ -7,7 +7,7 @@ const Navigation = () => {
       <ul className="flex space-x-8">
         <li ><a href="/" className="hover:underline">Home</a></li>
         <li className=""><a href="/member-dashboard" className="hover:underline">Member Dashboard</a></li>
-        <li className=""><a href="#services" className="hover:underline">Services</a></li>
+        <li className=""><a href="/admin-dashboard" className="hover:underline">Admin Dashboard</a></li>
         <li className=""><a href="/member-loan-request" className="hover:underline">Loan Request</a></li>
       </ul>
     </nav>
