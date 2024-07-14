@@ -5,6 +5,7 @@ import { useFundingPool } from "../utils/useFundingPool";
 import { useLoanManager } from "../utils/useLoanManager";
 import { useNavigate } from 'react-router-dom';
 import { ethers } from "ethers";
+import Navigation from "../components/Navigations";
 
 const AdminDashboard = () => {
   const { signer, account } = useWeb3();
@@ -134,7 +135,9 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div>
+    <div className="w-5/6 m-auto">
+      <Navigation/>
+      <div className="mt-8 px-40 py-4 h-full">
       <h1>Admin Dashboard</h1>
       <h2>Total Deposits</h2>
       <p>Total ETH Deposited: {totalEth || 'Loading...'}</p>
@@ -199,6 +202,7 @@ const AdminDashboard = () => {
 
       <div>
         <button onClick={handleGoToAdminLoanManagementDashboard}>Accept Member Loan & Disburse</button>
+      </div>
       </div>
     </div>
   );

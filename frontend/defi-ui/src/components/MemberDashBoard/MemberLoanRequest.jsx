@@ -3,6 +3,7 @@ import { ethers } from 'ethers';
 import { useWeb3 } from '../../utils/Web3Provider';
 import { useLoanManager } from '../../utils/useLoanManager';
 import { useEthPriceConsumerV3 } from '../../utils/useEthPriceConsumerV3';
+import Navigation from '../Navigations';
 
 const MemberLoanRequest = () => {
   const { signer } = useWeb3();
@@ -36,8 +37,8 @@ const MemberLoanRequest = () => {
         return;
       }
 
-      const usdcAmount = ethers.utils.parseUnits(amount,8);
-      console.log("USDC:",usdcAmount.toString());
+      const usdcAmount = ethers.utils.parseUnits(amount, 8);
+      console.log("USDC:", usdcAmount.toString());
       const collateralEth = await calculateEthCollateral(usdcAmount);
       setEthCollateral(collateralEth);
     } catch (error) {
@@ -65,37 +66,56 @@ const MemberLoanRequest = () => {
   };
 
   return (
-    <div>
-      <h2>Request a Loan</h2>
-      <form onSubmit={handleRequestLoan}>
-        <div>
-          <label>Amount (USDC):</label>
-          <input
-            type="number"
-            value={amount}
-            onChange={handleAmountChange}
-            required
-          />
-        </div>
-        {ethPrice && (
-          <div>
-            <p>Latest ETH Price: ${ethers.utils.formatUnits(ethPrice, 8)} USD</p>
+    <div className='w-5/6 m-auto h-screen'>
+      <Navigation/>
+      <div className='px-40 py-4 mt-16'>
+        <h2 className='text-3xl text-teal-200 font-bold mb-12'>Request a Loan</h2>
+        <form onSubmit={handleRequestLoan}>
+          <div className="w-2/5">
+            <div>
+              <label htmlFor="USDC Amount" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                Requested USDC Amount
+              </label>
+              <input
+                id="usdc"
+                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                placeholder="XX"
+                type="number"
+                value={amount}
+                onChange={handleAmountChange}
+                required
+              />
+            </div>
+            <button
+              className='text-white mt-4 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-gray-900 dark:hover:bg-blue-700 dark:focus:ring-blue-800'
+              type="button"
+              onClick={handleCalculateEthCollateral}>
+              Calculate ETH Collateral
+            </button>
+
+            <div className='mt-4'>
+              <label htmlFor="company" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                Required ETH Collateral
+              </label>
+              <input
+                type="text"
+                id="company"
+                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                placeholder="ETH"
+                value={ethCollateral}
+                required
+                disabled
+              />
+            </div>
           </div>
-        )}
-        <p>click on calculate eth collateral for calculating eth collateral for {amount}$ USDC</p>
-        {ethCollateral && (
-          <div>
-            <p>Required ETH Collateral: {ethCollateral} ETH</p>
-          </div>
-        )}
-        <button type="button" onClick={fetchEthPrice}>
-          Fetch Latest ETH Price
-        </button>
-        <button type="button" onClick={handleCalculateEthCollateral}>
-          Calculate ETH Collateral
-        </button>
-        <button type="submit">Request Loan</button>
-      </form>
+          <button
+            type="submit"
+            className="text-white mt-4 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+          >
+            Request Loan
+          </button>
+        </form>
+      </div>
     </div>
   );
 };

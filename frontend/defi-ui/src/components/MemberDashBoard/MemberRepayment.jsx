@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useWeb3 } from "../utils/Web3Provider";
 import { useLoanManager } from "../utils/useLoanManager";
+import Navigation from "../Navigations";
 
 const MemberRepayment = () => {
   const { signer, account } = useWeb3();
@@ -33,6 +34,7 @@ const MemberRepayment = () => {
 
   return (
     <div>
+      <Navigation/>
       <h2>Repay Loan</h2>
       {loans.length === 0 ? (
         <p>No loans found.</p>

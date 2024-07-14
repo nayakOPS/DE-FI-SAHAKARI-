@@ -19,7 +19,7 @@ body {
   }
   
   p {
-    color: #cccccc;
+    /* color: #cccccc; */
     font-size: 1.2em;
     margin-bottom: 40px;
   }
