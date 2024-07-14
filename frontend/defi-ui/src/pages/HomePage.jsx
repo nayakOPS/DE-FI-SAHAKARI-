@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWeb3 } from '../utils/Web3Provider';
 import './HomePage.css';
+import Navigation from '../components/Navigations';
 
 const HomePage = () => {
   const { account, connectWallet } = useWeb3();
@@ -33,10 +34,12 @@ const HomePage = () => {
   };
 
   return (
-    <div className="w-5/6 m-auto mt-8 px-40 py-4 h-screen">
-      <h1 className='text-3xl font-bold'>DeFi Sahakari</h1>
+    <div className='w-5/6 m-auto '>
+    <Navigation/>
+    <div className="mt-8 px-40 py-4 h-screen">
+      {/* <h1 className='text-3xl font-bold text-center'>DeFi Sahakari</h1> */}
 
-      <div className='mt-32 text-center'>
+      <div className='mt-16 text-center'>
         <h1 className='font-bold'>Welcome to Your DeFi Sahakari App</h1>
         <p className='w-4/5 mx-auto mt-4'>
           De-Fi Sahakari revolutionizes decentralized finance by integrating secure and user-friendly
@@ -56,6 +59,7 @@ const HomePage = () => {
           <button onClick={handleConnectWallet}>Connect Wallet</button>
         )}
       </div>
+    </div>
     </div>
   );
 };

@@ -5,6 +5,7 @@ import { useWeb3 } from '../../utils/Web3Provider';
 import { useMemberRegistry } from '../../utils/useMemberRegistry';
 import { useFundingPool } from '../../utils/useFundingPool';
 import Navigation from '../../components/Navigations';
+// import MemberLoanRequestModal from './MemberLoanRequestModal';
 
 const Dashboard = () => {
   const { signer, account, connectWallet } = useWeb3();
@@ -17,6 +18,10 @@ const Dashboard = () => {
   const [usdcAmount, setUsdcAmount] = useState('');
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  // const [isLoanModalOpen, setIsLoanModalOpen] = useState(false);
+
+  // const openModal = () => setIsLoanModalOpen(true);
+  // const closeModal = () => setIsLoanModalOpen(false);
 
   const toggleModal = () => {
     setIsModalOpen(!isModalOpen);
@@ -91,9 +96,9 @@ const Dashboard = () => {
 
   return (
     <main className='h-screen'>
-      <div className='w-5/6 m-auto mt-8' >
-        {/* <Navigation /> */}
-        <div className='px-40 py-4'>
+      <div className='w-5/6 m-auto' >
+        <Navigation />
+        <div className='mt-16 px-40 py-4'>
 
           <h1 className="text-3xl text-teal-200 font-bold mb-12">Member Dashboard</h1>
           {isRegistered ? (
@@ -148,22 +153,7 @@ const Dashboard = () => {
                         onClick={toggleModal}
                         className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
                       >
-                        <svg
-                          className="w-3 h-3"
-                          aria-hidden="true"
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="white"
-                          viewBox="0 0 14 14"
-                        >
-                          <path
-                            stroke="red"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M1 1l6 6m0 0l6 6M7 7l6-6M7 7l-6 6"
-                          />
-                        </svg>
-                        <span className="sr-only">Close modal</span>
+                        X
                       </button>
                     </div>
                     {/* Modal body */}
@@ -174,7 +164,7 @@ const Dashboard = () => {
                             htmlFor="name"
                             className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
                           >
-                            Name
+                            USDC Amount
                           </label>
                           <input
                             type="text"
@@ -185,54 +175,6 @@ const Dashboard = () => {
                             value={usdcAmount}
                             onChange={(e) => setUsdcAmount(e.target.value)}
                             required
-                          />
-                        </div>
-                        <div className="col-span-2 sm:col-span-1">
-                          <label
-                            htmlFor="price"
-                            className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                          >
-                            Price
-                          </label>
-                          <input
-                            type="number"
-                            name="price"
-                            id="price"
-                            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                            placeholder="$2999"
-                            required
-                          />
-                        </div>
-                        <div className="col-span-2 sm:col-span-1">
-                          <label
-                            htmlFor="category"
-                            className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                          >
-                            Category
-                          </label>
-                          <select
-                            id="category"
-                            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                          >
-                            <option defaultValue>Select category</option>
-                            <option value="TV">TV/Monitors</option>
-                            <option value="PC">PC</option>
-                            <option value="GA">Gaming/Console</option>
-                            <option value="PH">Phones</option>
-                          </select>
-                        </div>
-                        <div className="col-span-2">
-                          <label
-                            htmlFor="description"
-                            className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                          >
-                            Product Description
-                          </label>
-                          <textarea
-                            id="description"
-                            rows="4"
-                            className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                            placeholder="Write product description here"
                           />
                         </div>
                       </div>
@@ -253,7 +195,7 @@ const Dashboard = () => {
                             clipRule="evenodd"
                           />
                         </svg>
-                        Add new product
+                        Deposit USDC
                       </button>
                     </form>
                   </div>
@@ -265,6 +207,8 @@ const Dashboard = () => {
               <p className='mt-8 text-teal-200'>Want to borrow USDC?</p>
               <p className='mb-8 text-teal-200 text-sm'>You can get Loan when you deposit ETH, 150% eth collateral is needed in terms of comparison with USDC</p>
               <button onClick={handleLoanRequestButton}>Request Loan</button>
+              {/* <button onClick={openModal}>Request Loan</button> */}
+              {/* <MemberLoanRequestModal isOpen={isModalOpen} onRequestClose={closeModal} /> */}
             </>
           ) : (
             <div>
