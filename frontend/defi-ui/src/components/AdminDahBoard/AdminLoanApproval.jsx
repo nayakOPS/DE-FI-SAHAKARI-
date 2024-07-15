@@ -2,11 +2,13 @@ import React, { useState } from "react";
 import { useWeb3 } from "../../utils/Web3Provider";
 import { useLoanManager } from "../../utils/useLoanManager";
 import { ethers } from "ethers";
+import { useFundingPool } from "../../utils/useFundingPool"
 import Navigation from "../Navigations";
 
 const AdminLoanApproval = () => {
   const { signer } = useWeb3();
   const { disburseLoan, loanManagerContract, getLoans, approveLoan } = useLoanManager(signer);
+  const { approveLoanManager } = useFundingPool(signer);
   const [borrowerAddress, setBorrowerAddress] = useState("");
   const [loanDetails, setLoanDetails] = useState([]);
   const [errorMessage, setErrorMessage] = useState("");
@@ -60,11 +62,22 @@ const AdminLoanApproval = () => {
   const handleDisburseLoan = async (e, borrowerAddress,loanIndex ) => {
     e.preventDefault();
     const formattedLoanIndex = ethers.BigNumber.from(loanIndex);
+
+    const loan = loanDetails.find((loan) => loan.loanIndex === parseInt(loanIndex));
+    if (!loan) {
+      setError('Loan not found.');
+      return;
+    }
+
     console.log("The borrower Address: ",borrowerAddress,"type is:",typeof(borrowerAddress) );
     console.log("The Loan Index: ",loanIndex,"type is:",typeof(loanIndex));
+
     setIsLoading(true);
     setError('');
     try {
+       // Approve the loan manager with the loan amount
+       await approveLoanManager(loan.amount);
+       
       const txHash = await disburseLoan(borrowerAddress,formattedLoanIndex);
       setTransactionHash(txHash);
     } catch (error) {

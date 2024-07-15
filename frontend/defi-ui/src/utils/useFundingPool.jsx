@@ -198,7 +198,8 @@ export const useFundingPool = (signer, signerAddress) => {
   const approveLoanManager = async (amount) => {
     if (contract && signer) {
       try {
-        const tx = await contract.approveLoanManager(amount);
+        const parsedAmount = ethers.utils.parseUnits(amount.toString(), 6);
+        const tx = await contract.approveLoanManager(parsedAmount);
         await tx.wait();
         console.log('Transaction successful:', tx);
       } catch (error) {
