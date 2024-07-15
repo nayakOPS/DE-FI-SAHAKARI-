@@ -42,10 +42,11 @@ const HomePage = () => {
       <div className='mt-16 text-center'>
         <h1 className='font-bold'>Welcome to Your DeFi Sahakari App</h1>
         <p className='w-4/5 mx-auto mt-4'>
-          De-Fi Sahakari revolutionizes decentralized finance by integrating secure and user-friendly
-          blockchain solutions, providing a seamless experience for managing financial assets and
-          services. Join us to explore innovative DeFi opportunities and enhance your financial
-          freedom.
+        Welcome to De-Fi Sahakari, a decentralized finance (DeFi) application committed to revolutionizing the cooperative finance landscape in Nepal. Our project addresses a critical issue prevalent in traditional cooperative societies: the lack of transparency and accountability, which often leads to financial scams and mismanagement.
+        </p>
+        <h2 className='font-bold'>Our Mission</h2>
+        <p className='w-4/5 mx-auto mt-4'>
+        We aim to bring transparency, trust, and security to the cooperative finance system using blockchain technology. By leveraging the immutable and decentralized nature of blockchain, we ensure that all transactions are transparent, verifiable, and tamper-proof.
         </p>
         {address ? (
           <div className='mt-8'>
