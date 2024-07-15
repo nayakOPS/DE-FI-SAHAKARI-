@@ -135,6 +135,67 @@ export const useFundingPool = (signer, signerAddress) => {
     }
   };
 
+  const withdrawETH = async (amount) => {
+    try {
+      if (!contract) {
+        throw new Error('Contract not available');
+      }
+
+      const tx = await contract.withdrawETH(ethers.utils.parseEther(amount));
+      await tx.wait();
+      console.log('ETH Withdraw successful:', tx);
+    } catch (error) {
+      console.error('ETH Withdraw error:', error);
+      throw error;
+    }
+  };
+
+  const withdrawUSDC = async (amount) => {
+    try {
+      if (!contract) {
+        throw new Error('Contract not available');
+      }
+
+      const tx = await contract.withdrawUSDC(ethers.utils.parseUnits(amount, 6));
+      await tx.wait();
+      console.log('USDC Withdraw successful:', tx);
+    } catch (error) {
+      console.error('USDC Withdraw error:', error);
+      throw error;
+    }
+  };
+
+  const payInterest = async (member) => {
+    try {
+      if (!contract) {
+        throw new Error('Contract not available');
+      }
+
+      const tx = await contract.payInterest(member);
+      await tx.wait();
+      console.log('Interest payment successful:', tx);
+    } catch (error) {
+      console.error('Interest payment error:', error);
+      throw error;
+    }
+  };
+
+  const transferAllUSDC = async (to) => {
+    try {
+      if (!contract) {
+        throw new Error('Contract not available');
+      }
+
+      const tx = await contract.transferAllUSDC(to);
+      await tx.wait();
+      console.log('USDC Transfer successful:', tx);
+    } catch (error) {
+      console.error('USDC Transfer error:', error);
+      throw error;
+    }
+  };
+
+
   return {
     getUSDCBalance,
     getEthBalance,
@@ -143,6 +204,11 @@ export const useFundingPool = (signer, signerAddress) => {
     approveLoan,
     fetchTotalDeposits,
     totalEth,
-    totalUsdc
+    totalUsdc,
+    depositETH,
+    withdrawETH,
+    withdrawUSDC,
+    payInterest,
+    transferAllUSDC
   };
 };

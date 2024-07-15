@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
-import { useWeb3React } from '@web3-react/core'; // Example dependency for Web3 integration
-import { useFinanceProcessor } from './hooks/useFinanceProcessor'; // Import your hook implementation
+import { useWeb3 } from "../../utils/Web3Provider";
+import { useFinanceProcessor } from '../../utils/useFinanceProcessor';
 
-function AdminFinanceProcessor() {
-  const { account, library } = useWeb3React(); // Example Web3React integration
+const AdminFinanceProcessor = () => {
+  const { signer, account } = useWeb3();
   const [borrowerAddress, setBorrowerAddress] = useState('');
   const [loanIndex, setLoanIndex] = useState('');
   const [repaymentAmount, setRepaymentAmount] = useState('');
   const [ethCollateral, setEthCollateral] = useState('');
 
-  const { accrueInterest, distributeInterest, processLoanApproval, processLoanRepayment, liquidateCollateral } = useFinanceProcessor(library.getSigner());
+  const { accrueInterest, distributeInterest, processLoanApproval, processLoanRepayment, liquidateCollateral } = useFinanceProcessor(signer);
 
   const handleAccrueInterest = async () => {
     try {

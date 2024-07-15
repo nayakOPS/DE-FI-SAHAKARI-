@@ -7,6 +7,7 @@ import HomePage from './pages/HomePage';
 import RegisterMember from './components/MemberDashBoard/RegisterMember';
 import MemberLoanRequest from './components/MemberDashBoard/MemberLoanRequest';
 import AdminLoanApproval from './components/AdminDahBoard/AdminLoanApproval'
+import AdminFinanceProcessor from './components/AdminDahBoard/AdminFinanceProcessor';
 
 const AppRouter = () => {
   return (
@@ -18,6 +19,7 @@ const AppRouter = () => {
         <Route path="/register-member" element={<RegisterMember />} />
         <Route path="/member-loan-request" element={<MemberLoanRequest />} />
         <Route path="/badminloan-approval" element={<AdminLoanApproval/>} />
+        <Route path="/finance-process-admin" element={<AdminFinanceProcessor/>} />
       </Routes>
     </Router>
   );
