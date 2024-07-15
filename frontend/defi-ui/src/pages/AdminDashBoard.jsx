@@ -6,6 +6,7 @@ import { useLoanManager } from "../utils/useLoanManager";
 import { useNavigate } from 'react-router-dom';
 import { ethers } from "ethers";
 import Navigation from "../components/Navigations";
+import Modal from "../components/AdminDahBoard/Modal";
 
 const AdminDashboard = () => {
   const { signer, account } = useWeb3();
@@ -18,6 +19,8 @@ const AdminDashboard = () => {
   const [searchAddress, setSearchAddress] = useState("");
   const [pendingLoans, setPendingLoans] = useState([]);
   const [walletAddress, setWalletAddress] = useState("");
+  const [isModalOpen, setModalOpen] = useState(false);
+  const [selectedMember, setSelectedMember] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -26,6 +29,24 @@ const AdminDashboard = () => {
       fetchTotalDeposits();
     }
   }, [contract]);
+
+
+  const openModal = (member) => {
+    console.log('opening for member', member)
+    handleGetLoans(member);
+    setSelectedMember(member);
+    console.log('selected member', selectedMember)
+    setModalOpen(true);
+  };
+
+  useEffect(() => {
+    console.log("Selected Member is:", selectedMember)
+  }, [selectedMember])
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setSelectedMember(null);
+  };
 
   const fetchAllMembers = async () => {
     try {
@@ -39,7 +60,8 @@ const AdminDashboard = () => {
     }
   };
 
-  const getMemberDetails = async () => {
+  const getMemberDetails = async (member_address) => {
+    console.log('member_address', member_address)
     try {
       const details = await contract.getMember(searchAddress);
       setMemberDetails(details);
@@ -96,6 +118,8 @@ const AdminDashboard = () => {
         [borrower]: formattedLoans // Store formatted loan details by borrower address
       }));
       console.log('Loan details fetched successfully:', formattedLoans);
+      console.log('Loan Details', loanDetails)
+      console.log(selectedMember)
     } catch (error) {
       console.error('Error getting loan details:', error);
       setLoanDetails(prevState => ({
@@ -107,6 +131,15 @@ const AdminDashboard = () => {
 
   const formatLoanDetails = (loanResponse) => {
     return loanResponse.map((loan) => ({
+      /*
+      borrower: loan[0], // Borrower address
+      amount: ethers.utils.formatUnits(loan.amount, 6), // Loan amount in USDC
+      ethCollateral: ethers.utils.formatEther(loan[2]), // ETH collateral
+      repaymentAmount: ethers.utils.formatUnits(loan.repaymentAmount, 6), // Repayment amount in USDC
+      isApproved: loan[4], // Approval status
+      isRepaid: loan[5], // Repayment status
+      dueDate: new Date(loan[6].toNumber() * 1000).toLocaleDateString() // Due date
+      */
       LoanIndex: loan.loanIndex.toNumber(), // Convert BigNumber to number
       borrower: loan.borrower,
       amount: ethers.utils.formatUnits(loan.amount, 6), // Format amount using ethers.js
@@ -123,7 +156,7 @@ const AdminDashboard = () => {
     console.log('Connected Wallet Address:', address);
     console.log('Admin Wallet Address:', '0x73fE2b14b3a53778F3F1bd2b243440995C4B68a4');
 
-      if (address.toLowerCase() === '0x73fe2b14b3a53778f3f1bd2b243440995c4b68a4') {
+    if (address.toLowerCase() === '0x73fe2b14b3a53778f3f1bd2b243440995c4b68a4') {
       console.log("Navigating to admin");
       navigate('/dashboard');
     } else {
@@ -133,36 +166,100 @@ const AdminDashboard = () => {
   };
 
   const handleGoToAdminLoanManagementDashboard = () => {
-      navigate('/badminloan-approval');
+    navigate('/badminloan-approval');
   };
 
   return (
     <div className="w-5/6 m-auto">
-      <Navigation/>
+      <Navigation />
       <div className="mt-8 px-40 py-4 h-full">
-      <h1>Admin Dashboard</h1>
-      <h2>Total Deposits</h2>
-      <p>Total ETH Deposited: {totalEth || 'Loading...'}</p>
-      <p>Total USDC Deposited: {totalUsdc || 'Loading...'}</p>
+        <h1 className="text-3xl text-teal-200 font-bold mb-12">Admin Dashboard</h1>
+        <div className="grid md:grid-cols-3 gap-4 text-center">
+          <div className="bg-slate-50 rounded-2xl px-12 py-8 text-base text-slate-700 font-bold">
+            <p>{totalUsdc || 'Loading...'}</p>
+            <p>Total USDC Deposited</p>
+          </div>
+          <div className="bg-slate-50 rounded-2xl px-12 py-8 text-slate-700 text-base font-bold">
+            <p className="font">{totalEth || 'Loading...'}</p>
+            <p className="text-base font-bold">Total ETH Deposited</p>
+          </div>
+          <div>
+            <button
+              onClick={handleGoToAdminLoanManagementDashboard}
+              className="block text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+            >Accept Member Loan & Disburse</button>
+          </div>
+        </div>
 
-      <h2>All Members</h2>
-      {members.length === 0 ? (
-        <p>No members found.</p>
-      ) : (
-        <ul>
-        {members.map((member, index) => (
-          <li key={index}>
-            <p>Index:{index}</p>
-            <p>Name: {member.name}</p>
-            <p>Address: {member.memberAddress}</p>
-            <p>Registered: {member.isRegistered ? "Yes" : "No"}</p>
-            {loanDetails[member.memberAddress] !== undefined ? (
-              <div>
-                <h3>Loan Details</h3>
-                {loanDetails[member.memberAddress] ? (
-                  loanDetails[member.memberAddress].map((loan, idx) => (
+        <div className="relative overflow-x-auto shadow-md sm:rounded-lg mt-8">
+          <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+            <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+              <tr>
+                <th scope="col" className="px-6 py-3">
+                  S.N
+                </th>
+                <th scope="col" className="px-6 py-3">
+                  Address
+                </th>
+                <th scope="col" className="px-6 py-3">
+                  Member Name
+                </th>
+                <th scope="col" className="px-6 py-3">
+                  <span >Action</span>
+                </th>
+                <th scope="col" className="px-6 py-3">
+                  <span>Member Details</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {members.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="px-6 py-4 text-center">No members found.</td>
+                </tr>
+              ) : (
+                members.map((member, index) => (
+                  <tr
+                    key={index}
+                    className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                  >
+                    <th
+                      scope="row"
+                      className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
+                    >
+                      {index + 1}
+                    </th>
+                    <td className="px-6 py-4">{member.memberAddress}</td>
+                    <td className="px-6 py-4">{member.name}</td>
+                    <td className="px-6 py-4 text-left">
+                      <button
+                        onClick={() => openModal(member.memberAddress)}
+                        className="hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300"
+                      >
+                        Loan Details
+                      </button>
+                    </td>
+                    <td>
+                      <button
+                        className="hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300"
+                        onClick={() => openModal(member.memberAddress)}
+                      >Get Member Details</button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {selectedMember && (
+          <Modal isOpen={isModalOpen} onClose={closeModal}>
+            {loanDetails[selectedMember].length !==0 ? (
+              <div className="text-black text-sm">
+                {loanDetails[selectedMember] ? (
+                  loanDetails[selectedMember].map((loan, idx) => (
                     <div key={idx}>
-                      <p>Loan Index: {loan.LoanIndex}</p>
+                      <p>Loan Index: {loan.LoanIndex +1}</p>
                       <p>Loan Amount: {loan.amount} USDC</p>
                       <p>ETH Collateral: {loan.ethCollateral} ETH</p>
                       <p>Repayment Amount: {loan.repaymentAmount} USDC</p>
@@ -177,36 +274,29 @@ const AdminDashboard = () => {
                 )}
               </div>
             ) : (
-              <p>Click on Fetch Loan Details for knowing the loan details of the memeber</p>
+              <p className="text-black text-base">Not requested for loan</p>
             )}
-            <button onClick={() => handleGetLoans(member.memberAddress)}>
-              Fetch Loan Details
-            </button>
-          </li>
-        ))}
-      </ul>
-      )}
 
-    <h2>Search Member</h2>
-      <input 
-        type="text" 
-        placeholder="Enter member address" 
-        value={searchAddress}
-        onChange={handleSearchAddressChange}
-      />
-      <button onClick={getMemberDetails}>Get Member Details</button>
-      {memberDetails && (
-        <div>
-          <h3>Member Details</h3>
-          <p>Name: {memberDetails.name}</p>
-          <p>Address: {memberDetails.memberAddress}</p>
-          <p>Registered: {memberDetails.isRegistered ? "Yes" : "No"}</p>
-        </div>
-      )}
+          </Modal>
+        )}
 
-      <div>
-        <button onClick={handleGoToAdminLoanManagementDashboard}>Accept Member Loan & Disburse</button>
-      </div>
+        {/* Get member details do not display additional information over the above table. So commenting it for now */}
+        {/* <h2>Search Member</h2>
+        <input
+          type="text"
+          placeholder="Enter member address"
+          value={searchAddress}
+          onChange={handleSearchAddressChange}
+        />
+        <button onClick={getMemberDetails}>Get Member Details</button>
+        {memberDetails && (
+          <div>
+            <h3>Member Details</h3>
+            <p>Name: {memberDetails.name}</p>
+            <p>Address: {memberDetails.memberAddress}</p>
+            <p>Registered: {memberDetails.isRegistered ? "Yes" : "No"}</p>
+          </div>
+        )} */}
       </div>
     </div>
   );
