@@ -173,7 +173,6 @@ const AdminDashboard = () => {
     <div className="w-5/6 m-auto">
       <Navigation />
       <div className="mt-8 px-40 py-4 h-full">
-{/*
         <h1 className="text-3xl text-teal-200 font-bold mb-12">Admin Dashboard</h1>
         <div className="grid md:grid-cols-3 gap-4 text-center">
           <div className="bg-slate-50 rounded-2xl px-12 py-8 text-base text-slate-700 font-bold">
@@ -185,9 +184,9 @@ const AdminDashboard = () => {
             <p className="text-base font-bold">Total ETH Deposited</p>
           </div>
           <div>
-            <button 
-            onClick={handleGoToAdminLoanManagementDashboard}
-            className="block text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+            <button
+              onClick={handleGoToAdminLoanManagementDashboard}
+              className="block text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
             >Accept Member Loan & Disburse</button>
           </div>
         </div>
@@ -233,17 +232,17 @@ const AdminDashboard = () => {
                     <td className="px-6 py-4">{member.memberAddress}</td>
                     <td className="px-6 py-4">{member.name}</td>
                     <td className="px-6 py-4 text-left">
-                      <button 
-                      onClick={() => openModal(member.memberAddress)}
-                      className="hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300"
+                      <button
+                        onClick={() => openModal(member.memberAddress)}
+                        className="hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300"
                       >
                         Loan Details
                       </button>
                     </td>
                     <td>
                       <button
-                      className="hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300" 
-                      onClick={() => openModal(member.memberAddress)}
+                        className="hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300"
+                        onClick={() => openModal(member.memberAddress)}
                       >Get Member Details</button>
                     </td>
                   </tr>
@@ -255,41 +254,12 @@ const AdminDashboard = () => {
 
         {selectedMember && (
           <Modal isOpen={isModalOpen} onClose={closeModal}>
-            {loanDetails[selectedMember] !== undefined ? (
-              loanDetails[selectedMember].map((loan, idx) => (
-                <div className="text-black" key={idx}>
-                  <p>Loan Amount: {loan.amount} USDC</p>
-                  <p>ETH Collateral: {loan.ethCollateral} ETH</p>
-                  <p>Repayment Amount: {loan.repaymentAmount} USDC</p>
-                  <p>Due Date: {loan.dueDate}</p>
-                  <p>Approved: {loan.isApproved ? "Yes" : "No"}</p>
-                  <p>Repaid: {loan.isRepaid ? "Yes" : "No"}</p>
-                </div>
-              ))
-*/}
-      <h1>Admin Dashboard</h1>
-      <h2>Total Deposits</h2>
-      <p>Total ETH Deposited: {totalEth || 'Loading...'}</p>
-      <p>Total USDC Deposited: {totalUsdc || 'Loading...'}</p>
-
-      <h2>All Members</h2>
-      {members.length === 0 ? (
-        <p>No members found.</p>
-      ) : (
-        <ul>
-        {members.map((member, index) => (
-          <li key={index}>
-            <p>Index:{index}</p>
-            <p>Name: {member.name}</p>
-            <p>Address: {member.memberAddress}</p>
-            <p>Registered: {member.isRegistered ? "Yes" : "No"}</p>
-            {loanDetails[member.memberAddress] !== undefined ? (
-              <div>
-                <h3>Loan Details</h3>
-                {loanDetails[member.memberAddress] ? (
-                  loanDetails[member.memberAddress].map((loan, idx) => (
+            {loanDetails[selectedMember].length !==0 ? (
+              <div className="text-black text-sm">
+                {loanDetails[selectedMember] ? (
+                  loanDetails[selectedMember].map((loan, idx) => (
                     <div key={idx}>
-                      <p>Loan Index: {loan.LoanIndex}</p>
+                      <p>Loan Index: {loan.LoanIndex +1}</p>
                       <p>Loan Amount: {loan.amount} USDC</p>
                       <p>ETH Collateral: {loan.ethCollateral} ETH</p>
                       <p>Repayment Amount: {loan.repaymentAmount} USDC</p>
@@ -304,11 +274,12 @@ const AdminDashboard = () => {
                 )}
               </div>
             ) : (
-              <p>Not requested for loan</p>
+              <p className="text-black text-base">Not requested for loan</p>
             )}
 
           </Modal>
         )}
+
         {/* Get member details do not display additional information over the above table. So commenting it for now */}
         {/* <h2>Search Member</h2>
         <input
