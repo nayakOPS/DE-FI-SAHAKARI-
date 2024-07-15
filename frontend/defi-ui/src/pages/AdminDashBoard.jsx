@@ -14,7 +14,7 @@ const AdminDashboard = () => {
   const { getPendingLoans, approveLoan: approveLoanFromFundingPool, fetchTotalDeposits, totalEth, totalUsdc } = useFundingPool(signer, account);
   const { loanManagerContract, getLoans } = useLoanManager(signer)
   const [members, setMembers] = useState([]);
-  const [loanDetails, setLoanDetails] = useState([]);
+  const [loanDetails, setLoanDetails] = useState({});
   const [memberDetails, setMemberDetails] = useState(null);
   const [searchAddress, setSearchAddress] = useState("");
   const [pendingLoans, setPendingLoans] = useState([]);
@@ -124,7 +124,7 @@ const AdminDashboard = () => {
       console.error('Error getting loan details:', error);
       setLoanDetails(prevState => ({
         ...prevState,
-        [borrower]: null // Set to null to indicate no loan details found
+        [borrower]: [] // Set to null to indicate no loan details found
       }));
     }
   };
@@ -254,7 +254,7 @@ const AdminDashboard = () => {
 
         {selectedMember && (
           <Modal isOpen={isModalOpen} onClose={closeModal}>
-            {loanDetails[selectedMember].length !==0 ? (
+            {loanDetails[selectedMember] && loanDetails[selectedMember].length !==0 ? (
               <div className="text-black text-sm">
                 {loanDetails[selectedMember] ? (
                   loanDetails[selectedMember].map((loan, idx) => (

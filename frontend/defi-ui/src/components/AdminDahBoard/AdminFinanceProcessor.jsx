@@ -6,7 +6,6 @@ const AdminFinanceProcessor = () => {
   const { signer, account } = useWeb3();
   const [borrowerAddress, setBorrowerAddress] = useState('');
   const [loanIndex, setLoanIndex] = useState('');
-  const [repaymentAmount, setRepaymentAmount] = useState('');
   const [ethCollateral, setEthCollateral] = useState('');
 
   const { accrueInterest, distributeInterest, processLoanApproval, processLoanRepayment, liquidateCollateral } = useFinanceProcessor(signer);
@@ -37,16 +36,6 @@ const AdminFinanceProcessor = () => {
       console.error('Failed to process loan approval:', error);
     }
   };
-
-  const handleLoanRepayment = async () => {
-    try {
-      const txHash = await processLoanRepayment(borrowerAddress, loanIndex, repaymentAmount);
-      console.log('Loan repayment processed. Transaction hash:', txHash);
-    } catch (error) {
-      console.error('Failed to process loan repayment:', error);
-    }
-  };
-
   const handleLiquidateCollateral = async () => {
     try {
       const txHash = await liquidateCollateral(borrowerAddress, loanIndex);
@@ -59,16 +48,30 @@ const AdminFinanceProcessor = () => {
   return (
     <div>
       <h2>Admin Finance Processor</h2>
+      <br />
       <div>
+        <p>Click on Accrue Interest To manually accrue interest to specific member</p>
         <button onClick={handleAccrueInterest}>Accrue Interest</button>
+        <br />
+        <br />
+        <p>Click on Distribute Interest To accrue interest to all Member at once</p>
         <button onClick={handleDistributeInterest}>Distribute Interest</button>
       </div>
+      <br />
       <div>
+        <p>Borrower Address: </p>
         <input type="text" placeholder="Borrower Address" value={borrowerAddress} onChange={(e) => setBorrowerAddress(e.target.value)} />
+        <br />
+        <br />
+        <p>Loan Index: </p>
         <input type="text" placeholder="Loan Index" value={loanIndex} onChange={(e) => setLoanIndex(e.target.value)} />
-        <input type="text" placeholder="Repayment Amount" value={repaymentAmount} onChange={(e) => setRepaymentAmount(e.target.value)} />
+        <br />
+        <br />
+        <p>Click on Process Loan Approval to approve the loand and disburse loan at once </p>
         <button onClick={handleLoanApproval}>Process Loan Approval</button>
-        <button onClick={handleLoanRepayment}>Process Loan Repayment</button>
+          <br />
+          <br />
+        <p>Click on Liquidate Collateral for liquidating the user loan when not paid on time , eth will be swapped with usdc and stored in funding pool</p>
         <button onClick={handleLiquidateCollateral}>Liquidate Collateral</button>
       </div>
     </div>

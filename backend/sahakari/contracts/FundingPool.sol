@@ -47,6 +47,11 @@ contract FundingPool {
         financeProcessor = FinanceProcessor(_financeProcessorAddress);
     }
 
+      // Function to approve LoanManager to spend USDC tokens
+    function approveLoanManager(uint256 amount) public {
+        usdcToken.approve(address(loanManager), amount);
+    }
+    
     // Function to register a member
     function registerMember(address _member) public {
         require(memberRegistry.getMember(_member).isRegistered, "Member not registered.");

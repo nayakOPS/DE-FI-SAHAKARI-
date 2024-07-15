@@ -115,8 +115,15 @@ contract LoanManager {
         require(!loan.isRepaid, "Loan is already repaid.");
         require(!loan.isDisbursed, "Loan is already disbursed.");
 
-        // Transfer the loan amount in USDC from the FundingPool to the borrower
-        require(fundingPool.usdcToken().transfer(_borrower, loan.amount), "Transfer failed.");
+        // Check FundingPool balance
+        uint256 fundingPoolBalance = fundingPool.usdcToken().balanceOf(address(fundingPool));
+        require(fundingPoolBalance >= loan.amount, "Insufficient balance in FundingPool.");
+        
+        // Approve the LoanManager to spend tokens from FundingPool
+        fundingPool.usdcToken().approve(address(this), loan.amount);
+
+         // Transfer the loan amount in USDC from the FundingPool to the borrower
+        require(fundingPool.usdcToken().transferFrom(address(fundingPool), _borrower, loan.amount), "Transfer failed.");
 
         loan.isDisbursed = true;
         emit LoanDisbursed(_borrower, _loanIndex, loan.amount);

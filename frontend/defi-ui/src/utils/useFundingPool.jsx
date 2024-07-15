@@ -3,7 +3,7 @@ import { ethers } from 'ethers';
 import FundingPoolABI from '../abis/FundingPool.json';
 import ERC20ABI from '../abis/IERC20.json';
 
-const contractAddress = "0x12f5c7A91566514E1D7D75f648fC7c7A5fF5Fdc3";
+const contractAddress = "0x3d392B423b6B847930C15e1C749E93Af59f5cE55";
 const usdcAddress = "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238";
 
 export const useFundingPool = (signer, signerAddress) => {
@@ -195,6 +195,19 @@ export const useFundingPool = (signer, signerAddress) => {
     }
   };
 
+  const approveLoanManager = async (amount) => {
+    if (contract && signer) {
+      try {
+        const tx = await contract.approveLoanManager(amount);
+        await tx.wait();
+        console.log('Transaction successful:', tx);
+      } catch (error) {
+        console.error('Error approving loan manager:', error);
+      }
+    } else {
+      console.error('Contract or signer is not initialized');
+    }
+  };
 
   return {
     getUSDCBalance,
@@ -205,10 +218,11 @@ export const useFundingPool = (signer, signerAddress) => {
     fetchTotalDeposits,
     totalEth,
     totalUsdc,
-    depositETH,
+    // depositETH,
     withdrawETH,
     withdrawUSDC,
     payInterest,
-    transferAllUSDC
+    transferAllUSDC,
+    approveLoanManager
   };
 };

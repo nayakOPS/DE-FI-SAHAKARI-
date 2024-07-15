@@ -108,11 +108,11 @@ const AdminLoanApproval = () => {
                     Approve Loan
                   </button>
                 )}
-                {loan.isApproved && !loan.isRepaid && (
+                {/* {loan.isApproved && !loan.isRepaid && (
                   <button onClick={() => handleDisburseLoan(loan.borrower, loan.loanIndex)}>
                     Disburse Loan
                   </button>
-                )}
+                )} */}
               </li>
             ))}
           </ul>
