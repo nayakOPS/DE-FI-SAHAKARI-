@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { ethers } from 'ethers';
 import LoanManagerABI from '../abis/LoanManager.json';
 
-const loanManagerAddress = '0x60E3a367057a1EBf609d2F851320031fE430F4Cb';
+const loanManagerAddress = '0xCb8e87271F8Bdd5a6CCa5318b2C23c760F5C919C';
 
 export const useLoanManager = (signer) => {
   const [loanManagerContract, setLoanManagerContract] = useState(null);
@@ -54,8 +54,17 @@ export const useLoanManager = (signer) => {
   };
 
   const disburseLoan = async (borrower, loanIndex) => {
-    if (!loanManagerContract) return;
-    return await loanManagerContract.disburseLoan(borrower, loanIndex);
+    if (!loanManagerContract)  throw new Error('Loan manager contract not initialized');
+    // return await loanManagerContract.disburseLoan(borrower, loanIndex);
+    try {
+      const tx = await loanManagerContract.disburseLoan(borrower, loanIndex);
+      await tx.wait();
+      console.log(`Loan disbursed successfully for borrower ${borrower} at index ${loanIndex}`);
+      return tx.hash;
+    } catch (error) {
+      console.error('Failed to disburse loan:', error);
+      throw error;
+    }
   };
 
   return {

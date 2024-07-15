@@ -131,6 +131,7 @@ const AdminDashboard = () => {
 
   const formatLoanDetails = (loanResponse) => {
     return loanResponse.map((loan) => ({
+      /*
       borrower: loan[0], // Borrower address
       amount: ethers.utils.formatUnits(loan.amount, 6), // Loan amount in USDC
       ethCollateral: ethers.utils.formatEther(loan[2]), // ETH collateral
@@ -138,6 +139,16 @@ const AdminDashboard = () => {
       isApproved: loan[4], // Approval status
       isRepaid: loan[5], // Repayment status
       dueDate: new Date(loan[6].toNumber() * 1000).toLocaleDateString() // Due date
+      */
+      LoanIndex: loan.loanIndex.toNumber(), // Convert BigNumber to number
+      borrower: loan.borrower,
+      amount: ethers.utils.formatUnits(loan.amount, 6), // Format amount using ethers.js
+      ethCollateral: ethers.utils.formatEther(loan.ethCollateral), // Format ETH collateral using ethers.js
+      repaymentAmount: ethers.utils.formatUnits(loan.repaymentAmount, 6), // Format repayment amount using ethers.js
+      isApproved: loan.isApproved,
+      isRepaid: loan.isRepaid,
+      isDisbursed: loan.isDisbursed,
+      dueDate: new Date(loan[8].toNumber() * 1000).toLocaleDateString() // Due date
     }));
   };
 
@@ -162,6 +173,7 @@ const AdminDashboard = () => {
     <div className="w-5/6 m-auto">
       <Navigation />
       <div className="mt-8 px-40 py-4 h-full">
+{/*
         <h1 className="text-3xl text-teal-200 font-bold mb-12">Admin Dashboard</h1>
         <div className="grid md:grid-cols-3 gap-4 text-center">
           <div className="bg-slate-50 rounded-2xl px-12 py-8 text-base text-slate-700 font-bold">
@@ -254,6 +266,43 @@ const AdminDashboard = () => {
                   <p>Repaid: {loan.isRepaid ? "Yes" : "No"}</p>
                 </div>
               ))
+*/}
+      <h1>Admin Dashboard</h1>
+      <h2>Total Deposits</h2>
+      <p>Total ETH Deposited: {totalEth || 'Loading...'}</p>
+      <p>Total USDC Deposited: {totalUsdc || 'Loading...'}</p>
+
+      <h2>All Members</h2>
+      {members.length === 0 ? (
+        <p>No members found.</p>
+      ) : (
+        <ul>
+        {members.map((member, index) => (
+          <li key={index}>
+            <p>Index:{index}</p>
+            <p>Name: {member.name}</p>
+            <p>Address: {member.memberAddress}</p>
+            <p>Registered: {member.isRegistered ? "Yes" : "No"}</p>
+            {loanDetails[member.memberAddress] !== undefined ? (
+              <div>
+                <h3>Loan Details</h3>
+                {loanDetails[member.memberAddress] ? (
+                  loanDetails[member.memberAddress].map((loan, idx) => (
+                    <div key={idx}>
+                      <p>Loan Index: {loan.LoanIndex}</p>
+                      <p>Loan Amount: {loan.amount} USDC</p>
+                      <p>ETH Collateral: {loan.ethCollateral} ETH</p>
+                      <p>Repayment Amount: {loan.repaymentAmount} USDC</p>
+                      <p>Due Date: {loan.dueDate}</p>
+                      <p>Approved: {loan.isApproved ? "Yes" : "No"}</p>
+                      <p>Disbursed: {loan.isDisbursed ? "Yes" : "No"}</p>
+                      <p>Repaid: {loan.isRepaid ? "Yes" : "No"}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p>Not requested for loan</p>
+                )}
+              </div>
             ) : (
               <p>Not requested for loan</p>
             )}
