@@ -135,6 +135,11 @@ contract LoanManager {
         require(loan.isApproved, "Loan is not approved.");
         require(loan.isDisbursed, "Loan is not disbursed.");
         require(!loan.isRepaid, "Loan is already repaid.");
+
+        // Ensure the LoanManager contract has sufficient allowance from borrower's USDC balance
+        require(fundingPool.usdcToken().allowance(_borrower, address(this)) >= _amount, "Allowance not set or insufficient.");
+
+        // Transfer tokens from borrower to LoanManager contract
         require(fundingPool.usdcToken().transferFrom(msg.sender, address(fundingPool), _amount), "Transfer failed.");
         loan.isRepaid = true;
         emit LoanRepaid(_borrower, _loanIndex, _amount);

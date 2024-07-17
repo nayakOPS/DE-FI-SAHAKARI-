@@ -5,19 +5,25 @@ import { useWeb3 } from '../../utils/Web3Provider';
 import { useMemberRegistry } from '../../utils/useMemberRegistry';
 import { useFundingPool } from '../../utils/useFundingPool';
 import Navigation from '../../components/Navigations';
+import { useLoanManager } from '../../utils/useLoanManager';
+import Modal from "../AdminDahBoard/Modal";
 // import MemberLoanRequestModal from './MemberLoanRequestModal';
 
 const Dashboard = () => {
   const { signer, account, connectWallet } = useWeb3();
   const memberRegistryContract = useMemberRegistry(signer);
-  const { getUSDCBalance, getEthBalance, depositUSDC, requestLoan } = useFundingPool(signer, account);
+  const { getUSDCBalance, getEthBalance, depositUSDC, requestLoan, approveLoanManager, ensureAllowanceForRepayment } = useFundingPool(signer, account);
+  const { getLoans, repayLoan, loanManagerContract, returnCollateral } = useLoanManager(signer);
   const [isRegistered, setIsRegistered] = useState(false);
   const [memberDetails, setMemberDetails] = useState(null);
   const [usdcBalance, setUsdcBalance] = useState(0);
   const [ethCollateral, setEthCollateral] = useState(0);
   const [usdcAmount, setUsdcAmount] = useState('');
+  const [loanDetails, setLoanDetails] = useState([]);
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const [issModalOpen, setModalOpen] = useState(false);
   // const [isLoanModalOpen, setIsLoanModalOpen] = useState(false);
 
   // const openModal = () => setIsLoanModalOpen(true);
@@ -31,8 +37,35 @@ const Dashboard = () => {
     if (memberRegistryContract && account) {
       checkMemberStatus();
       fetchBalances();
+      handleGetLoans(account);
     }
   }, [memberRegistryContract, account]);
+
+  const handleGetLoans = async (borrower) => {
+    try {
+      const loanResponse = await getLoans(borrower);
+      const formattedLoans = formatLoanDetails(loanResponse);
+      setLoanDetails(formattedLoans);
+      console.log('Loan details fetched successfully:', formattedLoans);
+    } catch (error) {
+      console.error('Error getting loan details:', error);
+      setLoanDetails([]); // Set to an empty array to indicate no loan details found
+    }
+  };
+
+  const formatLoanDetails = (loanResponse) => {
+    return loanResponse.map((loan) => ({
+      LoanIndex: loan.loanIndex.toNumber(), // Convert BigNumber to number
+      borrower: loan.borrower,
+      amount: ethers.utils.formatUnits(loan.amount, 6), // Format amount using ethers.js
+      ethCollateral: ethers.utils.formatEther(loan.ethCollateral), // Format ETH collateral using ethers.js
+      repaymentAmount: ethers.utils.formatUnits(loan.repaymentAmount, 6), // Format repayment amount using ethers.js
+      isApproved: loan.isApproved,
+      isRepaid: loan.isRepaid,
+      isDisbursed: loan.isDisbursed,
+      dueDate: new Date(loan.dueDate.toNumber() * 1000).toLocaleDateString() // Due date
+    }));
+  };
 
   const checkMemberStatus = async () => {
     try {
@@ -54,6 +87,7 @@ const Dashboard = () => {
       console.error('Error fetching balances:', error);
     }
   };
+
 
   const handleConnectWallet = async () => {
     try {
@@ -88,6 +122,53 @@ const Dashboard = () => {
     navigate('/member-loan-request')
   }
 
+  const handleLoanRepayment = async (borrower, loanIndex, amount) => {
+    try {
+      if (!amount) {
+        console.error('Repayment amount is required');
+        return;
+      }
+
+       // Check and approve allowance if needed
+      const allowanceApproved = await ensureAllowanceForRepayment(amount);
+      if (!allowanceApproved) {
+          console.error('Failed to approve allowance for repayment');
+          return;
+      }
+
+    console.log(`Repaying loan amount: ${amount} for loan index: ${loanIndex}`);
+
+     const approved =  await approveLoanManager(amount);
+     console.log("Successfullly Approved laon manager contract in behalf of funding pool:",approved);
+
+      const tx = await repayLoan(borrower, loanIndex, ethers.utils.parseUnits(amount, 6));
+      console.log("Succesfully Loan Repaid:", tx);
+      alert('Loan repaid successfully');
+      // await fetchLoans(); // Refresh loans after repayment
+      setLoanRepayAmount(''); // Clear the input field
+    } catch (error) {
+      console.error('Loan Repayment Error:', error);
+    }
+  };
+
+  const handleReturnCollateral = async (borrower, loanIndex) => {
+    try {
+      const tx = await returnCollateral(borrower, loanIndex);
+      console.log("Successfully returned collateral:", tx);
+      alert('Collateral returned successfully');
+      await handleGetLoans(borrower); // Refresh loans after returning collateral
+    } catch (error) {
+      console.error('Return Collateral Error:', error);
+    }
+  };
+
+  const openModal = () => {
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+  };
   if (!account) {
     return (
       <div>
@@ -120,7 +201,7 @@ const Dashboard = () => {
                   </div>
 
                   <div className='bg-slate-50 rounded-2xl px-12 py-8 text-center'>
-                    <p >{ethCollateral}</p>
+                      <p></p>
                     <p className='font-bold'>ETH Collateral</p>
                   </div>
                 </div>
@@ -214,16 +295,78 @@ const Dashboard = () => {
               <button onClick={handleLoanRequestButton}>Request Loan</button>
               {/* <button onClick={openModal}>Request Loan</button> */}
               {/* <MemberLoanRequestModal isOpen={isModalOpen} onRequestClose={closeModal} /> */}
+
+
+              <h3 className="text-3xl text-teal-200 font-bold mt-6">Laon Details</h3>
+              {loanDetails.length > 0 ? (
+            <table className="min-w-full border border-gray-200">
+              <thead className="bg-black-200">
+                <tr>
+                  <th className="py-2 px-4 border-b">Loan Index</th>
+                  <th className="py-2 px-4 border-b">Borrower</th>
+                  <th className="py-2 px-4 border-b">Amount</th>
+                  <th className="py-2 px-4 border-b">ETH Collateral</th>
+                  <th className="py-2 px-4 border-b">Repayment Amount</th>
+                  <th className="py-2 px-4 border-b">Due Date</th>
+                  <th className="py-2 px-4 border-b">Status</th>
+                  <th className="py-2 px-4 border-b">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loanDetails.map((loan) => (
+                  <tr key={loan.LoanIndex}>
+                    <td className="py-2 px-4 border-b text-center">{loan.LoanIndex}</td>
+                    <td className="py-2 px-4 border-b text-center">{loan.borrower}</td>
+                    <td className="py-2 px-4 border-b text-center">{loan.amount}</td>
+                    <td className="py-2 px-4 border-b text-center">{loan.ethCollateral}</td>
+                    <td className="py-2 px-4 border-b text-center">{loan.repaymentAmount}</td>
+                    <td className="py-2 px-4 border-b text-center">{loan.dueDate}</td>
+                    <td className="py-2 px-4 border-b text-center">
+                      {loan.isRepaid ? 'Repaid' : loan.isDisbursed ? 'Disbursed' : loan.isApproved ? 'Approved' : 'Pending'}
+                    </td>
+                    <td className="py-2 px-4 border-b text-center">
+                      {/* {!loan.isRepaid && (
+                        <button
+                          onClick={() => handleLoanRepayment(loan.borrower, loan.LoanIndex, loan.repaymentAmount)}
+                          className="bg-green-500 text-white px-4 py-2 rounded"
+                        >
+                          Repay
+                        </button>
+                      )} */}
+
+                        {loan.isRepaid ? (
+                          <button
+                            onClick={() => handleReturnCollateral(loan.borrower, loan.LoanIndex)}
+                            className="text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
+                          >
+                            Get Collateral Back
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleLoanRepayment(loan.borrower, loan.LoanIndex, loan.repaymentAmount)}
+                            className="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
+                          >
+                            Repay Loan
+                          </button>
+                        )}
+
+
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p>No loans found.</p>
+          )}
             </>
           ) : (
             <div>
-              <p>Member is not registered.</p>
-              <button onClick={handleRegister}>Register</button>
+              <p>Member is not registered.Please register for membership.</p>
+              <button onClick={handleRegister}>Register Now</button>
             </div>
           )}
-
         </div>
-
         <div>
         </div>
       </div>

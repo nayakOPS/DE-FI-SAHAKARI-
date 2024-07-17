@@ -4,6 +4,7 @@ import FundingPoolABI from '../abis/FundingPool.json';
 import ERC20ABI from '../abis/IERC20.json';
 
 const contractAddress = "0x3d392B423b6B847930C15e1C749E93Af59f5cE55";
+const loanManagerAddress = "0xbE5129136d932A7e621f081E034CD6F83d5dbdE9"
 const usdcAddress = "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238";
 
 export const useFundingPool = (signer, signerAddress) => {
@@ -210,6 +211,33 @@ export const useFundingPool = (signer, signerAddress) => {
     }
   };
 
+
+    // Function to ensure sufficient allowance for loan repayment
+    const ensureAllowanceForRepayment = async (amount) => {
+      try {
+        if (!contract || !signerAddress) {
+          throw new Error('Contract or signer address not available');
+        }
+
+        const usdcContract = new ethers.Contract(usdcAddress, ERC20ABI.abi, signer);
+        const allowance = await usdcContract.allowance(signerAddress, loanManagerAddress);
+        const parsedAmount = ethers.utils.parseUnits(amount, 6);
+
+        // Check if allowance is sufficient
+        if (allowance.lt(parsedAmount)) {
+          console.log('Allowance check working');
+          const approveTx = await usdcContract.approve(loanManagerAddress, parsedAmount);
+          await approveTx.wait();
+          console.log('Allowance approved');
+        }
+
+        return true;
+      } catch (error) {
+        console.error('Error ensuring allowance for repayment:', error);
+        return false;
+      }
+    };
+
   return {
     getUSDCBalance,
     getEthBalance,
@@ -224,6 +252,7 @@ export const useFundingPool = (signer, signerAddress) => {
     withdrawUSDC,
     payInterest,
     transferAllUSDC,
-    approveLoanManager
+    approveLoanManager,
+    ensureAllowanceForRepayment
   };
 };
