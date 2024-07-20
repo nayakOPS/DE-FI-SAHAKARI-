@@ -125,6 +125,9 @@ contract LoanManager {
          // Transfer the loan amount in USDC from the FundingPool to the borrower
         require(fundingPool.usdcToken().transferFrom(address(fundingPool), _borrower, loan.amount), "Transfer failed.");
 
+        // Update the total USDC deposits in the FundingPool
+        fundingPool.totalUsdcDeposits -= loan.amount;
+
         loan.isDisbursed = true;
         emit LoanDisbursed(_borrower, _loanIndex, loan.amount);
     }
@@ -176,7 +179,8 @@ contract LoanManager {
 
         uint256 collateralAmount = loan.ethCollateral;
         loan.ethCollateral = 0; // Reset the collateral to avoid double withdrawals
-        fundingPool.withdrawETH(collateralAmount);
+
+        fundingPool.withdrawETH(_borrower,collateralAmount);
         emit CollateralReturned(_borrower, _loanIndex, collateralAmount);
     }
 

@@ -94,7 +94,7 @@ contract FinanceProcessor {
         require(block.timestamp > loan.dueDate, "Loan due date has not passed.");
 
         // Liquidate collateral
-        fundingPool.withdrawETH(loan.ethCollateral);
+        fundingPool.withdrawETH(_borrower, loan.ethCollateral);
         // Swap ETH for USDC
         uint256 usdcReceived = swapEthForUsdc(loan.ethCollateral);
         // Deposit received USDC into FundingPool

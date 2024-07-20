@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { ethers } from 'ethers';
 import LoanManagerABI from '../abis/LoanManager.json';
 
-const loanManagerAddress = '0xbE5129136d932A7e621f081E034CD6F83d5dbdE9';
+const loanManagerAddress = '0x4604dD16fd549Ce365a82061b5D3a1BDb0919455';
 
 export const useLoanManager = (signer) => {
   const [loanManagerContract, setLoanManagerContract] = useState(null);
@@ -83,10 +83,12 @@ export const useLoanManager = (signer) => {
   const returnCollateral = async (borrower, loanIndex) => {
     if (!loanManagerContract) throw new Error('Loan manager contract not initialized');
     try {
-      const tx = await loanManagerContract.returnCollateral(borrower, loanIndex);
-      await tx.wait();
-      console.log(`Collateral returned successfully for borrower ${borrower} at index ${loanIndex}`);
-      return tx.hash;
+      const tx = await loanManagerContract.returnCollateral(borrower, loanIndex,{
+        gasLimit:300000
+      });
+      // await tx.wait();
+      console.log(`Collateral returned successfully for borrower ${borrower} at index ${loanIndex}, ${tx.hash}`);
+      // return tx.hash;
     } catch (error) {
       console.error('Failed to return collateral:', error);
       throw error;

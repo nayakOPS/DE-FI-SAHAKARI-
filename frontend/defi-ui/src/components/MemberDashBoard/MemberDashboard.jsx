@@ -12,7 +12,7 @@ import Modal from "../AdminDahBoard/Modal";
 const Dashboard = () => {
   const { signer, account, connectWallet } = useWeb3();
   const memberRegistryContract = useMemberRegistry(signer);
-  const { getUSDCBalance, getEthBalance, depositUSDC, requestLoan, approveLoanManager, ensureAllowanceForRepayment } = useFundingPool(signer, account);
+  const { getUSDCBalance, getEthBalance, depositUSDC, requestLoan, approveLoanManager, ensureAllowanceForRepayment, withdrawETH, withdrawUSDC} = useFundingPool(signer, account);
   const { getLoans, repayLoan, loanManagerContract, returnCollateral } = useLoanManager(signer);
   const [isRegistered, setIsRegistered] = useState(false);
   const [memberDetails, setMemberDetails] = useState(null);
@@ -22,6 +22,7 @@ const Dashboard = () => {
   const [loanDetails, setLoanDetails] = useState([]);
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [withdrawAmount, setWithdrawAmount] = useState('');
 
   const [issModalOpen, setModalOpen] = useState(false);
   // const [isLoanModalOpen, setIsLoanModalOpen] = useState(false);
@@ -152,13 +153,32 @@ const Dashboard = () => {
   };
 
   const handleReturnCollateral = async (borrower, loanIndex) => {
+    console.log("LoanIndex: ", loanIndex, "borrowr: ", borrower);
     try {
-      const tx = await returnCollateral(borrower, loanIndex);
-      console.log("Successfully returned collateral:", tx);
-      alert('Collateral returned successfully');
-      await handleGetLoans(borrower); // Refresh loans after returning collateral
-    } catch (error) {
+      await returnCollateral(borrower, loanIndex);
+    }
+    catch (error) {
       console.error('Return Collateral Error:', error);
+    }
+  };
+
+/*   const handleReturnCollateral = async (ethCollateral) => {
+    // console.log("LoanIndex: ", loanIndex, "borrowr: ", borrower);
+    try {
+       await withdrawETH(ethCollateral)
+    }
+    catch (error) {
+      console.error('Return Collateral Error:', error);
+    }
+  };
+ */
+
+  const handleWithdrawUSDC = async () => {
+    try {
+      await withdrawUSDC(withdrawAmount);
+      fetchBalances();
+    } catch (error) {
+      console.error('Withdraw USDC Error:', error);
     }
   };
 
@@ -215,6 +235,17 @@ const Dashboard = () => {
             >
               Deposit USDC
             </button>
+
+            <div>
+              <h3>Withdraw USDC</h3>
+                <input
+                  type="number"
+                  value={withdrawAmount}
+                  onChange={(e) => setWithdrawAmount(e.target.value)}
+                  placeholder="Amount in USDC"
+                />
+              <button onClick={handleWithdrawUSDC}>Withdraw USDC</button>
+            </div>
 
             {/* Main modal */}
             {isModalOpen && (
@@ -337,9 +368,17 @@ const Dashboard = () => {
                         {loan.isRepaid ? (
                           <button
                             onClick={() => handleReturnCollateral(loan.borrower, loan.LoanIndex)}
-                            className="text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
-                          >
-                            Get Collateral Back
+                            // onClick={ () => handleReturnCollateral(loan.ethCollateral)}
+                            // className="text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
+                            className={`text-white font-medium rounded-lg text-sm px-5 py-2.5 text-center ${loan.ethCollateral === "0.0" ? "bg-gray-600 cursor-not-allowed" : "bg-green-600 hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300"}`}
+                            disabled={loan.ethCollateral === "0.000000"}
+                            >
+                              {/* {console.log("the eth colateral: ", loan.ethCollateral)} */}
+                            {loan.ethCollateral === "0.000000"?(
+                              "Get Collateral Back"
+                            ):(
+                              "Collateral Already Gained"
+                              )}
                           </button>
                         ) : (
                           <button

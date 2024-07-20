@@ -3,8 +3,8 @@ import { ethers } from 'ethers';
 import FundingPoolABI from '../abis/FundingPool.json';
 import ERC20ABI from '../abis/IERC20.json';
 
-const contractAddress = "0x3d392B423b6B847930C15e1C749E93Af59f5cE55";
-const loanManagerAddress = "0xbE5129136d932A7e621f081E034CD6F83d5dbdE9"
+const contractAddress = "0x6Bd8099c2BFD76315344BC830607E3114BA84f4e";
+const loanManagerAddress = "0x4604dD16fd549Ce365a82061b5D3a1BDb0919455";
 const usdcAddress = "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238";
 
 export const useFundingPool = (signer, signerAddress) => {
@@ -141,8 +141,9 @@ export const useFundingPool = (signer, signerAddress) => {
       if (!contract) {
         throw new Error('Contract not available');
       }
-
-      const tx = await contract.withdrawETH(ethers.utils.parseEther(amount));
+      const tx = await contract.withdrawETH(ethers.utils.parseEther(amount),{
+        gasLimit: 3000000
+      });
       await tx.wait();
       console.log('ETH Withdraw successful:', tx);
     } catch (error) {

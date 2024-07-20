@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { ethers } from 'ethers';
 import FinanceProcessorABI from '../abis/FinanceProcessor.json';
 
-const financeProcessorAddress = '0xbb41f9E83FBF385f19329a8d97C211f018F660d8'; 
+const financeProcessorAddress = '0x89B20bAd44365e141824D584952fBf8DA143F104'; 
 
 export const useFinanceProcessor = (signer) => {
   const [financeProcessorContract, setFinanceProcessorContract] = useState(null);

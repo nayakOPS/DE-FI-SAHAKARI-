@@ -77,20 +77,30 @@ contract FundingPool {
     }
 
     // Members can withdraw ETH from the pool if they have repaid their loans
-    function withdrawETH(uint256 _amount) public {
-        require(ethBalances[msg.sender] >= _amount, "Insufficient balance.");
-        require(loanManager.hasRepaidLoans(msg.sender), "Outstanding loan must be repaid before withdrawing.");
-        ethBalances[msg.sender] -= _amount;
+    function withdrawETH(address _borrower, uint256 _amount) public {
+        require(ethBalances[_borrower] >= _amount, "Insufficient balance.");
+        require(loanManager.hasRepaidLoans(_borrower), "Outstanding loan must be repaid before withdrawing.");
+        ethBalances[_borrower] -= _amount;
         totalEthDeposits -= _amount;
-        payable(msg.sender).transfer(_amount);
-        emit EthWithdrawn(msg.sender, _amount);
+        payable(_borrower).transfer(_amount);
+        emit EthWithdrawn(_borrower, _amount);
     }
 
     // Members can withdraw USDC from the pool
     function withdrawUSDC(uint256 _amount) public {
         require(usdcBalances[msg.sender] >= _amount, "Insufficient balance.");
+
+        // Check FundingPool balance
+        uint256 fundingPoolBalance = usdcToken.balanceOf(address(this));
+        require(fundingPoolBalance >= _amount, "Insufficient balance in FundingPool.");
+
+        // Update internal balances
         usdcBalances[msg.sender] -= _amount;
         totalUsdcDeposits -= _amount;
+
+        // Approve the transfer from the FundingPool to the member
+        usdcToken.approve(msg.sender, _amount);
+
         require(usdcToken.transfer(msg.sender, _amount), "Transfer failed.");
         emit UsdcWithdrawn(msg.sender, _amount);
     }
