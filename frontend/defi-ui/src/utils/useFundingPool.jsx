@@ -3,8 +3,8 @@ import { ethers } from 'ethers';
 import FundingPoolABI from '../abis/FundingPool.json';
 import ERC20ABI from '../abis/IERC20.json';
 
-const contractAddress = "0x6Bd8099c2BFD76315344BC830607E3114BA84f4e";
-const loanManagerAddress = "0x4604dD16fd549Ce365a82061b5D3a1BDb0919455";
+const contractAddress = "0xFe857825639E70d341a86050BAb65F913cfc33bB";
+const loanManagerAddress = "0x8eDBE0b59d7e3Ae967544d7C182cB090324d69c1";
 const usdcAddress = "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238";
 
 export const useFundingPool = (signer, signerAddress) => {

@@ -24,7 +24,7 @@ contract LoanManager {
     FundingPool public fundingPool;
     // Maps each borrower to an array of their loans.
     mapping(address => Loan[]) public loans;
-    uint256 public staticInterestRate = 2; // 5% interest rate
+    uint256 public staticInterestRate = 2; // 2% interest rate
     uint256 public ethToUsdcRate; // ETH to USDC exchange rate
     uint256 constant COLLATERALIZATION_RATIO = 150;
 
@@ -80,7 +80,7 @@ contract LoanManager {
 
          // Transfer ETH collateral to FundingPool
         //  The special syntax {value: amount} is used to send Ether along with the function call
-        fundingPool.depositCollateral{value: msg.value}();
+        fundingPool.depositCollateral{value: msg.value}(msg.sender);
 
         uint256 loanIndex = loans[msg.sender].length;
 
@@ -126,7 +126,7 @@ contract LoanManager {
         require(fundingPool.usdcToken().transferFrom(address(fundingPool), _borrower, loan.amount), "Transfer failed.");
 
         // Update the total USDC deposits in the FundingPool
-        fundingPool.totalUsdcDeposits -= loan.amount;
+        fundingPool.decreaseTotalUsdcDeposits(loan.amount);
 
         loan.isDisbursed = true;
         emit LoanDisbursed(_borrower, _loanIndex, loan.amount);

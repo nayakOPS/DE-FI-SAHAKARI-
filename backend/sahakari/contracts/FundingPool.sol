@@ -106,10 +106,19 @@ contract FundingPool {
     }
 
     // Function to deposit collateral (ETH) for a member
-     function depositCollateral() external payable {
-        ethBalances[msg.sender] += msg.value;
+     function depositCollateral(address borrower) external payable {
+        ethBalances[borrower] += msg.value;
         totalEthDeposits += msg.value;
         emit EthDeposited(msg.sender, msg.value);
+    }
+
+      function increaseTotalUsdcDeposits(uint256 amount) external {
+        totalUsdcDeposits += amount;
+    }
+
+    function decreaseTotalUsdcDeposits(uint256 amount) external {
+        require(totalUsdcDeposits >= amount, "Insufficient USDC deposits");
+        totalUsdcDeposits -= amount;
     }
 
     // Function to query ETH balance of a member

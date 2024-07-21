@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { ethers } from 'ethers';
 import LoanManagerABI from '../abis/LoanManager.json';
 
-const loanManagerAddress = '0x4604dD16fd549Ce365a82061b5D3a1BDb0919455';
+const loanManagerAddress = '0x8eDBE0b59d7e3Ae967544d7C182cB090324d69c1';
 
 export const useLoanManager = (signer) => {
   const [loanManagerContract, setLoanManagerContract] = useState(null);
