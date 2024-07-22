@@ -22,6 +22,7 @@ const AdminDashboard = () => {
   const [isModalOpen, setModalOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState('');
   const navigate = useNavigate();
+  const [memberModal, setMemberModal] = useState(false)
 
   useEffect(() => {
     if (contract) {
@@ -38,6 +39,16 @@ const AdminDashboard = () => {
     console.log('selected member', selectedMember)
     setModalOpen(true);
   };
+
+  const openMemberModal = (addr) => {
+    setSelectedMember(addr);
+    setMemberModal(true);
+  }
+
+  const closeMemberModal = () => {
+    setMemberModal(false);
+    setSelectedMember(null)
+  }
 
   useEffect(() => {
     console.log("Selected Member is:", selectedMember)
@@ -63,8 +74,9 @@ const AdminDashboard = () => {
   const getMemberDetails = async (member_address) => {
     console.log('member_address', member_address)
     try {
-      const details = await contract.getMember(searchAddress);
+      const details = await contract.getMember(member_address);
       setMemberDetails(details);
+      setMemberModal(true);
     } catch (error) {
       console.error("Error fetching member details:", error);
     }
@@ -170,9 +182,9 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="w-5/6 m-auto">
+    <div className="w-5/6 m-auto min-h-screen">
       <Navigation />
-      <div className="mt-8 px-40 py-4 h-full">
+      <div className="mt-8 py-4 h-full">
         <h1 className="text-3xl text-teal-200 font-bold mb-12">Admin Dashboard</h1>
         <div className="grid md:grid-cols-3 gap-4 text-center">
           <div className="bg-slate-50 rounded-2xl px-12 py-8 text-base text-slate-700 font-bold">
@@ -186,7 +198,7 @@ const AdminDashboard = () => {
           <div>
             <button
               onClick={handleGoToAdminLoanManagementDashboard}
-              className="block text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+              className="block w-full h-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
             >Accept Member Loan & Disburse</button>
           </div>
         </div>
@@ -195,19 +207,19 @@ const AdminDashboard = () => {
           <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
             <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
               <tr>
-                <th scope="col" className="px-6 py-3">
+                <th scope="col" className="text-center px-6 py-3">
                   S.N
                 </th>
-                <th scope="col" className="px-6 py-3">
+                <th scope="col" className="text-center px-6 py-3">
                   Address
                 </th>
-                <th scope="col" className="px-6 py-3">
+                <th scope="col" className="text-center px-6 py-3">
                   Member Name
                 </th>
-                <th scope="col" className="px-6 py-3">
+                <th scope="col" className="text-center px-6 py-3">
                   <span >Action</span>
                 </th>
-                <th scope="col" className="px-6 py-3">
+                <th scope="col" className="text-center px-6 py-3">
                   <span>Member Details</span>
                 </th>
               </tr>
@@ -219,10 +231,12 @@ const AdminDashboard = () => {
                 </tr>
               ) : (
                 members.map((member, index) => (
+
                   <tr
                     key={index}
                     className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
                   >
+
                     <th
                       scope="row"
                       className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
@@ -241,8 +255,14 @@ const AdminDashboard = () => {
                     </td>
                     <td>
                       <button
-                        className="hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300"
-                        onClick={() => openModal(member.memberAddress)}
+                        className="hover:bg-blue-800 focus:ring-4 mx-4 focus:outline-none focus:ring-blue-300"
+                        onClick={() => {
+                          openMemberModal({
+                            memberAddress: member.memberAddress,
+                            name: member.name,
+                            isRegistered: member.isRegistered
+                          })
+                        }}
                       >Get Member Details</button>
                     </td>
                   </tr>
@@ -252,14 +272,24 @@ const AdminDashboard = () => {
           </table>
         </div>
 
+          <Modal isOpen={memberModal} onClose={closeMemberModal} title="Member Details">
         {selectedMember && (
-          <Modal isOpen={isModalOpen} onClose={closeModal}>
-            {loanDetails[selectedMember] && loanDetails[selectedMember].length !==0 ? (
+            <div className="text-black">
+              <p>Name: {selectedMember.name}</p>
+              <p>Address: {selectedMember.memberAddress}</p>
+              <p>Registered: {selectedMember.isRegistered ? "Yes" : "No"}</p>
+            </div>
+        )}
+          </Modal>
+
+        {selectedMember && (
+          <Modal isOpen={isModalOpen} onClose={closeModal} title="Loan Details">
+            {loanDetails[selectedMember] && loanDetails[selectedMember].length !== 0 ? (
               <div className="text-black text-sm">
                 {loanDetails[selectedMember] ? (
                   loanDetails[selectedMember].map((loan, idx) => (
                     <div key={idx}>
-                      <p>Loan Index: {loan.LoanIndex +1}</p>
+                      <p>Loan Index: {loan.LoanIndex + 1}</p>
                       <p>Loan Amount: {loan.amount} USDC</p>
                       <p>ETH Collateral: {loan.ethCollateral} ETH</p>
                       <p>Repayment Amount: {loan.repaymentAmount} USDC</p>
@@ -279,24 +309,6 @@ const AdminDashboard = () => {
 
           </Modal>
         )}
-
-        {/* Get member details do not display additional information over the above table. So commenting it for now */}
-        {/* <h2>Search Member</h2>
-        <input
-          type="text"
-          placeholder="Enter member address"
-          value={searchAddress}
-          onChange={handleSearchAddressChange}
-        />
-        <button onClick={getMemberDetails}>Get Member Details</button>
-        {memberDetails && (
-          <div>
-            <h3>Member Details</h3>
-            <p>Name: {memberDetails.name}</p>
-            <p>Address: {memberDetails.memberAddress}</p>
-            <p>Registered: {memberDetails.isRegistered ? "Yes" : "No"}</p>
-          </div>
-        )} */}
       </div>
     </div>
   );

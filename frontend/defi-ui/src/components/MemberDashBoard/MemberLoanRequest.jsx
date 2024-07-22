@@ -68,7 +68,7 @@ const MemberLoanRequest = () => {
   return (
     <div className='w-5/6 m-auto h-screen'>
       <Navigation/>
-      <div className='px-40 py-4 mt-16'>
+      <div className='py-4 mt-16'>
         <h2 className='text-3xl text-teal-200 font-bold mb-12'>Request a Loan</h2>
         <form onSubmit={handleRequestLoan}>
           <div className="w-2/5">
