@@ -1,9 +1,7 @@
 import React from 'react';
 
-const Modal = ({ isOpen, onClose, children }) => {
-  console.log('children', children)
+const Modal = ({ isOpen, onClose, children, title }) => {
   if (!isOpen) return null;
-
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="fixed inset-0 w-full h-full bg-black opacity-50" onClick={onClose}></div>
@@ -11,7 +9,7 @@ const Modal = ({ isOpen, onClose, children }) => {
         <div className="relative w-full max-w-lg p-4 mx-auto bg-white rounded-md shadow-lg">
           <div className="mt-3 sm:flex">
             <div className="mt-2 text-center sm:ml-4 sm:text-left">
-              <h4 className="text-lg font-medium text-gray-900">Loan Details</h4>
+              <h4 className="text-lg font-medium text-gray-900">{title}</h4>
               <div className="mt-2">
                 {children}
               </div>

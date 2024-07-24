@@ -3,7 +3,7 @@ import logoImage from '../assets/logo2.png'
 
 const Navigation = () => {
   return (
-    <nav className="flex justify-between items-baseline py-4 px-8 text-white mb-8 pt-8">
+    <nav className="flex justify-between items-center py-4 px-8 text-white mb-8 pt-8">
       <div className="flex items-center">
         <div className="bg-white p-30 rounded-full">
           <img src={logoImage} alt="DeFi Sahakari Logo" className="h-16 w-auto object-cover " /> {/* Adjust class names for styling */}

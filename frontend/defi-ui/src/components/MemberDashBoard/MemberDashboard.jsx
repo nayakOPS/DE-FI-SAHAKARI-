@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ethers } from 'ethers';
 import { useNavigate } from 'react-router-dom';
 import { useWeb3 } from '../../utils/Web3Provider';
@@ -12,7 +12,7 @@ import Modal from "../AdminDahBoard/Modal";
 const Dashboard = () => {
   const { signer, account, connectWallet } = useWeb3();
   const memberRegistryContract = useMemberRegistry(signer);
-  const { getUSDCBalance, getEthBalance, depositUSDC, requestLoan, approveLoanManager, ensureAllowanceForRepayment, withdrawETH, withdrawUSDC} = useFundingPool(signer, account);
+  const { getUSDCBalance, getEthBalance, depositUSDC, requestLoan, approveLoanManager, ensureAllowanceForRepayment, withdrawETH, withdrawUSDC } = useFundingPool(signer, account);
   const { getLoans, repayLoan, loanManagerContract, returnCollateral } = useLoanManager(signer);
   const [isRegistered, setIsRegistered] = useState(false);
   const [memberDetails, setMemberDetails] = useState(null);
@@ -33,6 +33,10 @@ const Dashboard = () => {
   const toggleModal = () => {
     setIsModalOpen(!isModalOpen);
   }
+
+  const totalEthCollateral = useMemo(() => {
+    return loanDetails.reduce((total, loan) => total + loan.ethCollateral, 0);
+  }, [loanDetails]);
 
   useEffect(() => {
     if (memberRegistryContract && account) {
@@ -130,17 +134,17 @@ const Dashboard = () => {
         return;
       }
 
-       // Check and approve allowance if needed
+      // Check and approve allowance if needed
       const allowanceApproved = await ensureAllowanceForRepayment(amount);
       if (!allowanceApproved) {
-          console.error('Failed to approve allowance for repayment');
-          return;
+        console.error('Failed to approve allowance for repayment');
+        return;
       }
 
-    console.log(`Repaying loan amount: ${amount} for loan index: ${loanIndex}`);
+      console.log(`Repaying loan amount: ${amount} for loan index: ${loanIndex}`);
 
-     const approved =  await approveLoanManager(amount);
-     console.log("Successfullly Approved laon manager contract in behalf of funding pool:",approved);
+      const approved = await approveLoanManager(amount);
+      console.log("Successfullly Approved laon manager contract in behalf of funding pool:", approved);
 
       const tx = await repayLoan(borrower, loanIndex, ethers.utils.parseUnits(amount, 6));
       console.log("Succesfully Loan Repaid:", tx);
@@ -162,16 +166,16 @@ const Dashboard = () => {
     }
   };
 
-/*   const handleReturnCollateral = async (ethCollateral) => {
-    // console.log("LoanIndex: ", loanIndex, "borrowr: ", borrower);
-    try {
-       await withdrawETH(ethCollateral)
-    }
-    catch (error) {
-      console.error('Return Collateral Error:', error);
-    }
-  };
- */
+  /*   const handleReturnCollateral = async (ethCollateral) => {
+      // console.log("LoanIndex: ", loanIndex, "borrowr: ", borrower);
+      try {
+         await withdrawETH(ethCollateral)
+      }
+      catch (error) {
+        console.error('Return Collateral Error:', error);
+      }
+    };
+   */
 
   const handleWithdrawUSDC = async () => {
     try {
@@ -191,172 +195,183 @@ const Dashboard = () => {
   };
   if (!account) {
     return (
-      <div>
-        <p>Please connect your wallet</p>
-        <button onClick={handleConnectWallet}>Connect Wallet</button>
+      <div className='flex flex-col items-center justify-center min-h-screen'>
+        <h1>Please connect your wallet</h1>
+        <button className='mt-4' onClick={handleConnectWallet}>Connect Wallet</button>
       </div>
     );
   }
 
   return (
-    <main className='h-screen'>
-      <div className='w-5/6 m-auto' >
-        <Navigation />
-        <div className='mt-16 px-40 py-4'>
+    <div className='w-5/6 m-auto min-h-screen' >
+      <Navigation />
+      <div className='mt-16 py-4'>
 
-          <h1 className="text-3xl text-teal-200 font-bold mb-12">Member Dashboard</h1>
-          {isRegistered ? (
-            < >
-              <div className='flex'>
-                <div className='bg-slate-50 rounded-2xl px-12 py-8 text-black w-2/4 mr-4'>
-                  <h2 className='font-bold text-xl'>Member Details</h2>
-                  <p>Name: {memberDetails.name}</p>
-                  <p >Address:<span className='text-sm text-slate-800'> {memberDetails.memberAddress}</span></p>
-                </div>
-                <div className='text-slate-700 mr-4'>
-                  {/* <p>Registered: {memberDetails.isRegistered ? 'Yes' : 'No'}</p> */}
-                  <div className='bg-slate-50 rounded-2xl px-12 py-8 mb-2 text-center'>
-                    <p>{ethers.utils.formatUnits(usdcBalance, 6)}</p>
-                    <p className='font-bold'>USDC Balance</p>
-                  </div>
-
-                  <div className='bg-slate-50 rounded-2xl px-12 py-8 text-center'>
-                      <p></p>
-                    <p className='font-bold'>ETH Collateral</p>
-                  </div>
+        <h1 className="text-3xl text-teal-200 font-bold mb-12">Member Dashboard</h1>
+        {isRegistered ? (
+          < >
+            <div className='flex flex-row'>
+              <div className='bg-slate-50 rounded-2xl px-12 py-8 text-black w-2/4 mr-4'>
+                <h2 className='font-bold text-xl'>Member Details</h2>
+                <p>Name: {memberDetails.name}</p>
+                <p >Address:<span className='text-sm text-slate-800'> {memberDetails.memberAddress}</span></p>
+              </div>
+              <div className='text-slate-700 mr-4 flex-1'>
+                {/* <p>Registered: {memberDetails.isRegistered ? 'Yes' : 'No'}</p> */}
+                <div className='bg-slate-50 rounded-2xl px-12 py-8 mb-2 text-center'>
+                  <p>{ethers.utils.formatUnits(usdcBalance, 6)}</p>
+                  <p className='font-bold'>USDC Balance</p>
                 </div>
 
-                <div>
-            {/* Modal toggle */}
-            <button
-              onClick={toggleModal}
-              className="block text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-              type="button"
-            >
-              Deposit USDC
-            </button>
+                <div className='bg-slate-50 rounded-2xl px-12 py-8 text-center'>
+                  <p>{totalEthCollateral}</p>
+                  <p className='font-bold'>ETH Collateral</p>
+                </div>
+              </div>
 
-            <div>
-              <h3>Withdraw USDC</h3>
-                <input
-                  type="number"
-                  value={withdrawAmount}
-                  onChange={(e) => setWithdrawAmount(e.target.value)}
-                  placeholder="Amount in USDC"
-                />
-              <button onClick={handleWithdrawUSDC}>Withdraw USDC</button>
-            </div>
+              <div>
+                {/* Modal toggle */}
+                <div className="mb-6 flex flex-col items-center gap-2">
+                  <h3>Withdraw USDC</h3>
+                  <input
+                    type="number"
+                    value={withdrawAmount}
+                    onChange={(e) => setWithdrawAmount(e.target.value)}
+                    placeholder="Amount in USDC"
+                    className="bg-gray-50 mb-2 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                  />
+                  <button
+                    className="block w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                    onClick={handleWithdrawUSDC}
+                  >Withdraw USDC</button>
+                </div>
 
-            {/* Main modal */}
-            {isModalOpen && (
-              <div
-                id="crud-modal"
-                tabIndex="-1"
-                aria-hidden="true"
-                className="fixed top-0 right-0 left-0 z-50 flex justify-center items-center w-full h-full bg-gray-800 bg-opacity-50"
-              >
-                <div className="relative p-4 w-full max-w-md max-h-full">
-                  {/* Modal content */}
-                  <div className="relative bg-white rounded-lg shadow dark:bg-gray-700">
-                    {/* Modal header */}
-                    <div className="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        Load USDC to Funding Pool
-                      </h3>
-                      <button
-                        type="button"
-                        onClick={toggleModal}
-                        className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
-                      >
-                        X
-                      </button>
-                    </div>
-                    {/* Modal body */}
-                    <form 
-                    onSubmit={handleDepositUSDC}
-                    className="p-4 md:p-5">
-                      <div className="grid gap-4 mb-4 grid-cols-2">
-                        <div className="col-span-2">
-                          <label
-                            htmlFor="name"
-                            className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                <button
+                  onClick={toggleModal}
+                  className="block py-8 w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                  type="button"
+                >
+                  Deposit USDC
+                </button>
+
+
+                {/* Main modal */}
+                {isModalOpen && (
+                  <div
+                    id="crud-modal"
+                    tabIndex="-1"
+                    aria-hidden="true"
+                    className="fixed top-0 right-0 left-0 z-50 flex justify-center items-center w-full h-full bg-gray-800 bg-opacity-50"
+                  >
+                    <div className="relative p-4 w-full max-w-md max-h-full">
+                      {/* Modal content */}
+                      <div className="relative bg-white rounded-lg shadow dark:bg-gray-700">
+                        {/* Modal header */}
+                        <div className="flex items-center justify-between p-4 md:p-5  rounded-t dark:border-gray-600">
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                            Load USDC to Funding Pool
+                          </h3>
+                          <button
+                            type="button"
+                            onClick={toggleModal}
+                            className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
                           >
-                            USDC Amount
-                          </label>
-                          <input
-                            type="number"
-                            name="usdc"
-                            id="name"
-                            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                            placeholder="Enter the USDC amount to deposit"
-                            value={usdcAmount}
-                            onChange={(e) => setUsdcAmount(e.target.value)}
-                            required
-                          />
+                            X
+                          </button>
                         </div>
+                        {/* Modal body */}
+                        <form
+                          onSubmit={handleDepositUSDC}
+                          className="p-4 md:p-5">
+                          <div className="grid gap-4 mb-4 grid-cols-2">
+                            <div className="col-span-2">
+                              <label
+                                htmlFor="name"
+                                className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                              >
+                                USDC Amount
+                              </label>
+                              <input
+                                type="number"
+                                name="usdc"
+                                id="name"
+                                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                                placeholder="Enter the USDC amount to deposit"
+                                value={usdcAmount}
+                                onChange={(e) => setUsdcAmount(e.target.value)}
+                                required
+                              />
+                            </div>
+                          </div>
+                          <button
+                            type="submit"
+                            // onClick={handleDepositUSDC}
+                            className="text-white py-2.5 inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                          >
+                            <svg
+                              className="me-1 -ms-1 w-5 h-5"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                            Deposit USDC
+                          </button>
+                        </form>
                       </div>
-                      <button
-                        type="submit"
-                        // onClick={handleDepositUSDC}
-                        className="text-white inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                      >
-                        <svg
-                          className="me-1 -ms-1 w-5 h-5"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        Deposit USDC
-                      </button>
-                    </form>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
-            )}
-          </div>
+            </div>
+            <div className='flex flex-row items-center'>
+              <div className='flex flex-col flex-1'>
+                <p className='mt-8 text-teal-200'>Want to borrow USDC?</p>
+                <p className='mb-8 text-teal-200 text-sm'>You can get Loan when you deposit ETH, 150% eth collateral is needed in terms of comparison with USDC</p>
               </div>
-              <p className='mt-8 text-teal-200'>Want to borrow USDC?</p>
-              <p className='mb-8 text-teal-200 text-sm'>You can get Loan when you deposit ETH, 150% eth collateral is needed in terms of comparison with USDC</p>
-              <button onClick={handleLoanRequestButton}>Request Loan</button>
-              {/* <button onClick={openModal}>Request Loan</button> */}
-              {/* <MemberLoanRequestModal isOpen={isModalOpen} onRequestClose={closeModal} /> */}
+              <div>
+                <button className='text-xl' onClick={handleLoanRequestButton}>Request Loan</button>
+              </div>
+            </div>
+            {/* <button onClick={openModal}>Request Loan</button> */}
+            {/* <MemberLoanRequestModal isOpen={isModalOpen} onRequestClose={closeModal} /> */}
 
 
-              <h3 className="text-3xl text-teal-200 font-bold mt-6">Laon Details</h3>
-              {loanDetails.length > 0 ? (
-            <table className="min-w-full border border-gray-200">
-              <thead className="bg-black-200">
-                <tr>
-                  <th className="py-2 px-4 border-b">Loan Index</th>
-                  <th className="py-2 px-4 border-b">Borrower</th>
-                  <th className="py-2 px-4 border-b">Amount</th>
-                  <th className="py-2 px-4 border-b">ETH Collateral</th>
-                  <th className="py-2 px-4 border-b">Repayment Amount</th>
-                  <th className="py-2 px-4 border-b">Due Date</th>
-                  <th className="py-2 px-4 border-b">Status</th>
-                  <th className="py-2 px-4 border-b">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loanDetails.map((loan) => (
-                  <tr key={loan.LoanIndex}>
-                    <td className="py-2 px-4 border-b text-center">{loan.LoanIndex}</td>
-                    <td className="py-2 px-4 border-b text-center">{loan.borrower}</td>
-                    <td className="py-2 px-4 border-b text-center">{loan.amount}</td>
-                    <td className="py-2 px-4 border-b text-center">{loan.ethCollateral}</td>
-                    <td className="py-2 px-4 border-b text-center">{loan.repaymentAmount}</td>
-                    <td className="py-2 px-4 border-b text-center">{loan.dueDate}</td>
-                    <td className="py-2 px-4 border-b text-center">
-                      {loan.isRepaid ? 'Repaid' : loan.isDisbursed ? 'Disbursed' : loan.isApproved ? 'Approved' : 'Pending'}
-                    </td>
-                    <td className="py-2 px-4 border-b text-center">
-                      {/* {!loan.isRepaid && (
+            <h3 className="text-3xl text-teal-200 font-bold mt-6">Loan Details</h3>
+            {loanDetails.length > 0 ? (
+              <div className="relative overflow-x-auto shadow-md sm:rounded-lg mt-8">
+                <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+                  <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                    <tr>
+                      <th className="py-2 px-4 text-center">Loan Index</th>
+                      <th className="py-2 px-4 text-center">Borrower</th>
+                      <th className="py-2 px-4 text-center">Amount</th>
+                      <th className="py-2 px-4 text-center">ETH Collateral</th>
+                      <th className="py-2 px-4 text-center">Repayment Amount</th>
+                      <th className="py-2 px-4 text-center">Due Date</th>
+                      <th className="py-2 px-4 text-center">Status</th>
+                      <th className="py-2 px-4 text-center">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loanDetails.map((loan) => (
+                      <tr key={loan.LoanIndex}>
+                        <td className="py-2 px-4  text-center">{loan.LoanIndex}</td>
+                        <td className="py-2 px-4  text-center">{loan.borrower}</td>
+                        <td className="py-2 px-4  text-center">{loan.amount}</td>
+                        <td className="py-2 px-4  text-center">{loan.ethCollateral}</td>
+                        <td className="py-2 px-4  text-center">{loan.repaymentAmount}</td>
+                        <td className="py-2 px-4  text-center">{loan.dueDate}</td>
+                        <td className="py-2 px-4  text-center">
+                          {loan.isRepaid ? 'Repaid' : loan.isDisbursed ? 'Disbursed' : loan.isApproved ? 'Approved' : 'Pending'}
+                        </td>
+                        <td className="py-2 px-4  text-center">
+                          {/* {!loan.isRepaid && (
                         <button
                           onClick={() => handleLoanRepayment(loan.borrower, loan.LoanIndex, loan.repaymentAmount)}
                           className="bg-green-500 text-white px-4 py-2 rounded"
@@ -365,51 +380,51 @@ const Dashboard = () => {
                         </button>
                       )} */}
 
-                        {loan.isRepaid ? (
-                          <button
-                            onClick={() => handleReturnCollateral(loan.borrower, loan.LoanIndex)}
-                            // onClick={ () => handleReturnCollateral(loan.ethCollateral)}
-                            // className="text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
-                            className={`text-white font-medium rounded-lg text-sm px-5 py-2.5 text-center ${loan.ethCollateral === "0.0" ? "bg-gray-600 cursor-not-allowed" : "bg-green-600 hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300"}`}
-                            disabled={loan.ethCollateral === "0.000000"}
+                          {loan.isRepaid ? (
+                            <button
+                              onClick={() => handleReturnCollateral(loan.borrower, loan.LoanIndex)}
+                              // onClick={ () => handleReturnCollateral(loan.ethCollateral)}
+                              // className="text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
+                              className={`text-white font-medium rounded-lg mx-4 text-sm px-5 py-2.5 text-center ${loan.ethCollateral === "0.0" ? "bg-gray-600 cursor-not-allowed" : "bg-green-600 hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300"}`}
+                              disabled={loan.ethCollateral !== "0.000000"}
                             >
                               {/* {console.log("the eth colateral: ", loan.ethCollateral)} */}
-                            {loan.ethCollateral === "0.000000"?(
-                              "Get Collateral Back"
-                            ):(
-                              "Collateral Already Gained"
+                              {loan.ethCollateral === "0.000000" ? (
+                                "Get Collateral Back"
+                              ) : (
+                                "Collateral Already Gained"
                               )}
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => handleLoanRepayment(loan.borrower, loan.LoanIndex, loan.repaymentAmount)}
-                            className="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
-                          >
-                            Repay Loan
-                          </button>
-                        )}
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleLoanRepayment(loan.borrower, loan.LoanIndex, loan.repaymentAmount)}
+                              className="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
+                            >
+                              Repay Loan
+                            </button>
+                          )}
 
 
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <p>No loans found.</p>
-          )}
-            </>
-          ) : (
-            <div>
-              <p>Member is not registered.Please register for membership.</p>
-              <button onClick={handleRegister}>Register Now</button>
-            </div>
-          )}
-        </div>
-        <div>
-        </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p>No loans found.</p>
+            )}
+          </>
+        ) : (
+          <div>
+            <p>Member is not registered.Please register for membership.</p>
+            <button onClick={handleRegister}>Register Now</button>
+          </div>
+        )}
       </div>
-    </main>
+      <div>
+      </div>
+    </div>
   );
 };
 
