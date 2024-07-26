@@ -5,24 +5,6 @@
 ## Project Description
 This folder contains the backend for the Decentralized Sahakari (De-Sahakari) project. The backend is responsible for managing the smart contracts deployed on the Ethereum blockchain. The contracts handle functionalities like member registration, fund handling, loan processing, and real-time ETH price fetching. The project leverages Solidity for smart contract development and Thirdweb for deployment and contract management.
 
-## Folder Structure
-```
-backend/sahakari
-├── contracts
-│   ├── IERC20.sol
-│   ├── EthPriceConsumerV3.sol
-│   ├── MemberRegistry.sol
-│   ├── FundingPool.sol
-│   ├── LoanManager.sol
-│   ├── FinanceProcessor.sol
-├── node_modules
-├── .gitignore
-├── hardhat.config.js
-├── package-lock.json
-├── package.json
-├── README.md
-├── yarn.lock
-```
 
 ## Installation Instructions
 1. **Clone the Repository**:
@@ -42,21 +24,12 @@ After making any changes to the contracts, run the following command to compile 
 ```sh
 npm run build
 ```
-or
-```sh
-yarn build
-```
 
 ### Deploying Contracts
 To deploy the smart contracts, run the following command:
 ```sh
 npm run deploy
 ```
-or
-```sh
-yarn deploy
-```
-
 
 ## Post-Deployment Steps
 After deploying the contracts, copy the respective contract ABI from the `artifacts` folder. Use the ABI and contract address in the frontend to interact with the deployed contracts.
