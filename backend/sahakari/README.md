@@ -1,5 +1,4 @@
-
-```markdown
+# Decentralized Sahakari (De-Sahakari)
 # De-Sahakari Backend
 
 ## Project Description
