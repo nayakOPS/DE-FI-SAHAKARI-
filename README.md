@@ -9,8 +9,6 @@ The project seeks to modernize traditional cooperative models (sahakaris) by add
 ## Key Features
 - **Smart Contracts**: Automated management of membership, voting, and financial transactions.
 - **Decentralized Ledger**: Immutable and transparent record of all transactions.
-- **Tokenization**: Platform-specific tokens for transactions and membership representation.
-- **Democratic Governance**: Blockchain-enabled voting mechanisms for member decision-making.
 - **Automated Compliance**: Enforcement of cooperative regulations and bylaws through smart contracts.
 
 ## Benefits
