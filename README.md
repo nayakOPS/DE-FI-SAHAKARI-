@@ -19,10 +19,10 @@ The project seeks to modernize traditional cooperative models (sahakaris) by add
 - **For the Community**: Increased financial inclusion, economic empowerment, and strengthened community ties.
 
 ## Hosted Site
-Check out the live platform here: [Your Hosted Site Link](#)
+Check out the live platform here: [https://de-sahakari.netlify.app/](#)
 
 ## Get Involved
-We welcome contributions and feedback. For more information or to get involved, please visit our [website](#).
+We welcome contributions and feedback. For more information or to get involved, please visit our [https://de-sahakari.netlify.app/](#).
 
 ---
 
