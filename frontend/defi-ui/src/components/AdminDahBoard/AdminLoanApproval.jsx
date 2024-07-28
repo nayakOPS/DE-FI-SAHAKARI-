@@ -4,10 +4,11 @@ import { useLoanManager } from "../../utils/useLoanManager";
 import { ethers } from "ethers";
 import { useFundingPool } from "../../utils/useFundingPool"
 import Navigation from "../Navigations";
+import Alert from "../Alerts";
 
 const AdminLoanApproval = () => {
   const { signer } = useWeb3();
-  const { disburseLoan, loanManagerContract, getLoans, approveLoan } = useLoanManager(signer);
+  const { events ,disburseLoan, loanManagerContract, getLoans, approveLoan } = useLoanManager(signer);
   const { approveLoanManager } = useFundingPool(signer);
   const [borrowerAddress, setBorrowerAddress] = useState("");
   const [loanDetails, setLoanDetails] = useState([]);
@@ -91,6 +92,12 @@ const AdminLoanApproval = () => {
   return (
     <div className="w-5/6 m-auto min-h-screen">
       <Navigation />
+      {events.LoanApproved.map((event, index) => (
+          <Alert status="succcess" message={`Loan ${event.index} approved for member ${event.member}`} />
+        ))}
+        {events.LoanDisbursed.map((event, index) => (
+          <Alert status="success" message={`Loan ${event.index} of ${ethers.utils.formatUnits(event.amount, 6)} disbursed for member${event.member}`} />
+        ))}
       <div className="mt-8 px-40 py-4 h-full">
         <h1 className="text-3xl text-teal-200 font-bold mb-4">Admin Loan Approval</h1>
         <div>

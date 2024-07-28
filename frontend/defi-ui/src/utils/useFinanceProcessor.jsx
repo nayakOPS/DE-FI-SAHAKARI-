@@ -1,16 +1,46 @@
 import { useEffect, useState } from 'react';
 import { ethers } from 'ethers';
 import FinanceProcessorABI from '../abis/FinanceProcessor.json';
+import { prepareEvent } from 'thirdweb';
 
-const financeProcessorAddress = '0xda4Df2A7E450faB154bD88043f4aB64F86Aa4285'; 
+const financeProcessorAddress = '0xda4Df2A7E450faB154bD88043f4aB64F86Aa4285';
 
 export const useFinanceProcessor = (signer) => {
   const [financeProcessorContract, setFinanceProcessorContract] = useState(null);
-
+  const [events, setEvents] = useState({
+    InterestAccrued: [],
+    CollateralLiquidated: []
+  })
   useEffect(() => {
     if (signer) {
       const contract = new ethers.Contract(financeProcessorAddress, FinanceProcessorABI.abi, signer);
       setFinanceProcessorContract(contract);
+
+      const handleInterstAccured = (address, interestAmount) => {
+        setEvents(preEvents => ({
+          ...preEvents,
+          InterestAccrued: [...preEvents.InterestAccrued, { member, interestAmount }]
+        }))
+      }
+      const handleCollateralLiquidated = (borrower, loanIndex, collateralAmount) => {
+        setEvents(preEvents => ({
+          ...preEvents,
+          CollateralLiquidated: [...preEvents.CollateralLiquidated, { borrower, loanIndex, collateralAmount}]
+        }))
+      }
+      
+      if(contract){
+        contract.on("InterestAccrued", handleInterstAccured);
+        contract.on("CollateralLiquidated", handleCollateralLiquidated);
+
+      }
+      return () => {
+        if(contract){
+          contract.off("InterestAccrued", handleInterstAccured);
+          contract.off("CollateralLiquidated", handleCollateralLiquidated);
+            
+        }
+      }
     }
   }, [signer]);
 
@@ -99,5 +129,6 @@ export const useFinanceProcessor = (signer) => {
     liquidateCollateral,
     getUSDCInterestAccrued,
     financeProcessorContract,
+    events
   };
 };

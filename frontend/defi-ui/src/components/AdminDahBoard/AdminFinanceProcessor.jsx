@@ -47,49 +47,57 @@ const AdminFinanceProcessor = () => {
   };
 
   return (
-    <div className="m-auto min-h-screen px-24">
-      <Navigation />
-      <h1 className="text-3xl text-teal-200 font-bold mb-12">Admin Finance Processor</h1>
-      <div className='flex flex-row gap-12 text-center my-8'>
-        <div className='flex flex-col w-[50%]'>
-          <button className='text-xl mb-2' onClick={handleAccrueInterest}>Accrue Interest</button>
-          <p>*manually accrues interest to specific member</p>
-        </div>
-        <div className='flex flex-col w-[50%]'>
-          <button className='text-xl mb-2' onClick={handleDistributeInterest}>Distribute Interest</button>
-          <p>*distributes interest to all Members at once</p>
-        </div>
+    <div className='bg-black bg-opacity-90'>
+      < div className="m-auto min-h-screen px-24" >
+        <Navigation />
+        {
+          account === "0x73fE2b14b3a53778F3F1bd2b243440995C4B68a4" || "0xd5bd2adc0cb6c90e8803fae0e42cda55f9fd4ee7" ?
+            <>
+              <h1 className="text-3xl text-teal-200 font-bold mb-12">Admin Finance Processor</h1>
+              <div className='flex flex-row gap-12 text-center my-8'>
+                <div className='flex flex-col w-[50%]'>
+                  <button className='text-xl mb-2' onClick={handleAccrueInterest}>Accrue Interest</button>
+                  <p>*manually accrues interest to specific member</p>
+                </div>
+                <div className='flex flex-col w-[50%]'>
+                  <button className='text-xl mb-2' onClick={handleDistributeInterest}>Distribute Interest</button>
+                  <p>*distributes interest to all Members at once</p>
+                </div>
+              </div>
+              <div>
+                <p>Borrower Address: </p>
+                <input
+                  type="text"
+                  placeholder="Borrower Address"
+                  value={borrowerAddress}
+                  className="bg-gray-50 mb-2 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                  onChange={(e) => setBorrowerAddress(e.target.value)}
+                />
+                <p>Loan Index: </p>
+                <input
+                  type="text"
+                  placeholder="Loan Index"
+                  value={loanIndex}
+                  className="bg-gray-50 mb-2 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                  onChange={(e) => setLoanIndex(e.target.value)}
+                />
+                <div className='flex flex-row gap-y-4 gap-12 text-center items-center my-4 pb-10'>
+                  <div className='flex flex-col gap-4 w-[50%]'>
+                    <button className='text-xl mb-2' onClick={handleLoanApproval}>Process Loan Approval</button>
+                    <p>*approves & disburse loan at once</p>
+                  </div>
+                  <div className='flex flex-col w-[50%]'>
+                    <button className='text-xl mb-2' onClick={handleLiquidateCollateral}>Liquidate Collateral</button>
+                    <p>*liquidates the user loan when not paid on time</p>
+                    <p className='text-sm'>(ETH will be swapped with USDC & stored in funding pool)</p>
+                  </div>
+                </div>
+              </div>
+            </>
+            : null
+        }
       </div>
-      <div>
-        <p>Borrower Address: </p>
-        <input
-          type="text"
-          placeholder="Borrower Address"
-          value={borrowerAddress}
-          className="bg-gray-50 mb-2 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-          onChange={(e) => setBorrowerAddress(e.target.value)}
-        />
-        <p>Loan Index: </p>
-        <input
-          type="text"
-          placeholder="Loan Index"
-          value={loanIndex}
-          className="bg-gray-50 mb-2 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-          onChange={(e) => setLoanIndex(e.target.value)}
-        />
-        <div className='flex flex-row gap-y-4 gap-12 text-center items-center my-4 pb-10'>
-          <div className='flex flex-col gap-4 w-[50%]'>
-            <button className='text-xl mb-2' onClick={handleLoanApproval}>Process Loan Approval</button>
-            <p>*approves & disburse loan at once</p>
-          </div>
-          <div className='flex flex-col w-[50%]'>
-            <button className='text-xl mb-2' onClick={handleLiquidateCollateral}>Liquidate Collateral</button>
-            <p>*liquidates the user loan when not paid on time</p>
-            <p className='text-sm'>(ETH will be swapped with USDC & stored in funding pool)</p>
-          </div>
-        </div>
-      </div>
-    </div>
+    </div >
   );
 }
 

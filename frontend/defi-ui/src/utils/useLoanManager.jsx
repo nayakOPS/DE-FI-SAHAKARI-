@@ -6,19 +6,77 @@ const loanManagerAddress = '0x8eDBE0b59d7e3Ae967544d7C182cB090324d69c1';
 
 export const useLoanManager = (signer) => {
   const [loanManagerContract, setLoanManagerContract] = useState(null);
+  const [events, setEvents] = useState({
+    LoanRequested: [],
+    LoanApproved: [],
+    LoanDisbursed: [],
+    LoanRepaid: [],
+    CollateralReturned: []
+  });
 
   useEffect(() => {
     if (signer) {
       const contract = new ethers.Contract(loanManagerAddress, LoanManagerABI.abi, signer);
       setLoanManagerContract(contract);
+
+      const handleLoanRequest = (borrower, amount, ethCollateral, repaymentAmount) => {
+        setEvents(preEvents => ({
+          ...preEvents,
+          LoanRequested: [...preEvents.LoanRequested, { borrower, amount, ethCollateral, repaymentAmounts }]
+        }))
+      }
+      const handleLoanApprove = (borrower, loanIndex) => {
+        setEvents(preEvents => ({
+          ...preEvents,
+          LoanApproved: [...preEvents.LoanApproved, { borrower, loanIndex }]
+        }))
+      }
+
+      const handleLoanDisbursed = (borrower, loanIndex, amount) => {
+        setEvents(preEvents => ({
+          ...preEvents,
+          LoanDisbursed: [...preEvents.LoanDisbursed, { borrower, loanIndex, amount }]
+        }))
+      }
+
+      const handleLoanRepaid = (borrower, loanIndex, amount) => {
+        setEvents(preEvents => ({
+          ...preEvents,
+          LoanRepaid: [...preEvents.LoanRepaid, { borrower, loanIndex, amount }]
+        }))
+      }
+
+      const handleCollateralReturned = (borrower, loanIndex, amount) => {
+        setEvents(preEvents => ({
+          ...preEvents,
+          CollateralReturned: [...preEvents.CollateralReturned, { borrower, loanIndex, amount }]
+        }))
+      }
+
+      if (contract) {
+        contract.on("LoanRequested", handleLoanRequest);
+        contract.on("LoanApproved", handleLoanApprove);
+        contract.on("LoanDisbursed", handleLoanDisbursed);
+        contract.on("LoanRepaid", handleLoanRepaid);
+        contract.on("CollateralReturned", handleCollateralReturned);
+      }
+      return () => {
+        if (contract) {
+          contract.off("LoanRequested", handleLoanRequest);
+          contract.off("LoanApproved", handleLoanApprove);
+          contract.off("LoanDisbursed", handleLoanDisbursed);
+          contract.off("LoanRepaid", handleLoanRepaid);
+          contract.off("CollateralReturned", handleCollateralReturned);
+        }
+      }
     }
   }, [signer]);
 
   const calculateEthCollateral = async (usdcAmount) => {
     if (!loanManagerContract) throw new Error('Loan manager contract not initialized');
-    
+
     try {
-      const collateralInWei  = await loanManagerContract.calculateEthCollateral(usdcAmount);
+      const collateralInWei = await loanManagerContract.calculateEthCollateral(usdcAmount);
       // convert wei to eth
       const collateralInEth = ethers.utils.formatEther(collateralInWei);
       return collateralInEth;
@@ -30,7 +88,7 @@ export const useLoanManager = (signer) => {
 
   const requestLoan = async (usdcAmount, ethCollateral) => {
     if (!loanManagerContract) throw new Error('Loan manager contract not initialized');
-    
+
     try {
       const tx = await loanManagerContract.requestLoan(usdcAmount, ethCollateral, {
         value: ethCollateral
@@ -54,7 +112,7 @@ export const useLoanManager = (signer) => {
   };
 
   const disburseLoan = async (borrower, loanIndex) => {
-    if (!loanManagerContract)  throw new Error('Loan manager contract not initialized');
+    if (!loanManagerContract) throw new Error('Loan manager contract not initialized');
     // return await loanManagerContract.disburseLoan(borrower, loanIndex);
     try {
       const tx = await loanManagerContract.disburseLoan(borrower, loanIndex);
@@ -83,8 +141,8 @@ export const useLoanManager = (signer) => {
   const returnCollateral = async (borrower, loanIndex) => {
     if (!loanManagerContract) throw new Error('Loan manager contract not initialized');
     try {
-      const tx = await loanManagerContract.returnCollateral(borrower, loanIndex,{
-        gasLimit:300000
+      const tx = await loanManagerContract.returnCollateral(borrower, loanIndex, {
+        gasLimit: 300000
       });
       // await tx.wait();
       console.log(`Collateral returned successfully for borrower ${borrower} at index ${loanIndex}, ${tx.hash}`);
@@ -135,14 +193,15 @@ export const useLoanManager = (signer) => {
   return {
     calculateEthCollateral,
     requestLoan,
-    getLoans, 
-    approveLoan, 
+    getLoans,
+    approveLoan,
     disburseLoan,
     repayLoan,
     returnCollateral,
     hasRepaidLoans,
     setLoanAsRepaid,
     setEthToUsdcRate,
-    loanManagerContract
+    loanManagerContract,
+    events
   };
 };

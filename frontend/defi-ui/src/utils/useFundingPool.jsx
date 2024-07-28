@@ -11,6 +11,16 @@ export const useFundingPool = (signer, signerAddress) => {
   const [contract, setContract] = useState(null);
   const [totalEth, setTotalEth] = useState(null);
   const [totalUsdc, setTotalUsdc] = useState(null);
+  const [events, setEvents] = useState({
+    EthDeposited: [],
+    UsdcDeposited: [],
+    EthWithdrawn: [],
+    UsdcWithdrawn: [],
+    InterestPaid: [],
+    CollateralLiquidated: [],
+    MemberRegistered: [],
+    UsdcTransferred: [],
+  });
 
   useEffect(() => {
     if (signer) {
@@ -20,6 +30,85 @@ export const useFundingPool = (signer, signerAddress) => {
         signer
       );
       setContract(fundingPoolContract);
+
+      const handleEthDeposited = (member, amount) => {
+        setEvents(prevEvents => ({
+          ...prevEvents,
+          EthDeposited: [...prevEvents.EthDeposited, { member, amount }]
+        }));
+      };
+
+      const handleUsdcDeposited = (member, amount) => {
+        setEvents(prevEvents => ({
+          ...prevEvents,
+          UsdcDeposited: [...prevEvents.UsdcDeposited, { member, amount }]
+        }));
+      };
+
+      const handleEthWithdrawn = (member, amount) => {
+        setEvents(prevEvents => ({
+          ...prevEvents,
+          EthWithdrawn: [...prevEvents.EthWithdrawn, { member, amount }]
+        }));
+      };
+
+      const handleUsdcWithdrawn = (member, amount) => {
+        setEvents(prevEvents => ({
+          ...prevEvents,
+          UsdcWithdrawn: [...prevEvents.UsdcWithdrawn, { member, amount }]
+        }));
+      };
+
+      const handleInterestPaid = (member, amount) => {
+        setEvents(prevEvents => ({
+          ...prevEvents,
+          InterestPaid: [...prevEvents.InterestPaid, { member, amount }]
+        }));
+      };
+
+      const handleCollateralLiquidated = (borrower, collateralAmount) => {
+        setEvents(prevEvents => ({
+          ...prevEvents,
+          CollateralLiquidated: [...prevEvents.CollateralLiquidated, { borrower, collateralAmount }]
+        }));
+      };
+
+      const handleMemberRegistered = (member) => {
+        setEvents(prevEvents => ({
+          ...prevEvents,
+          MemberRegistered: [...prevEvents.MemberRegistered, { member }]
+        }));
+      };
+
+      const handleUsdcTransferred = (to, amount) => {
+        setEvents(prevEvents => ({
+          ...prevEvents,
+          UsdcTransferred: [...prevEvents.UsdcTransferred, { to, amount }]
+        }));
+      };
+
+      if (contract) {
+        contract.on("EthDeposited", handleEthDeposited);
+        contract.on("UsdcDeposited", handleUsdcDeposited);
+        contract.on("EthWithdrawn", handleEthWithdrawn);
+        contract.on("UsdcWithdrawn", handleUsdcWithdrawn);
+        contract.on("InterestPaid", handleInterestPaid);
+        contract.on("CollateralLiquidated", handleCollateralLiquidated);
+        contract.on("MemberRegistered", handleMemberRegistered);
+        contract.on("UsdcTransferred", handleUsdcTransferred);
+      }
+      return () => {
+        if (contract) {
+          contract.off("EthDeposited", handleEthDeposited);
+          contract.off("UsdcDeposited", handleUsdcDeposited);
+          contract.off("EthWithdrawn", handleEthWithdrawn);
+          contract.off("UsdcWithdrawn", handleUsdcWithdrawn);
+          contract.off("InterestPaid", handleInterestPaid);
+          contract.off("CollateralLiquidated", handleCollateralLiquidated);
+          contract.off("MemberRegistered", handleMemberRegistered);
+          contract.off("UsdcTransferred", handleUsdcTransferred);
+        }
+      }
     }
   }, [signer]);
 
@@ -141,7 +230,7 @@ export const useFundingPool = (signer, signerAddress) => {
       if (!contract) {
         throw new Error('Contract not available');
       }
-      const tx = await contract.withdrawETH(ethers.utils.parseEther(amount),{
+      const tx = await contract.withdrawETH(ethers.utils.parseEther(amount), {
         gasLimit: 3000000
       });
       await tx.wait();
@@ -213,31 +302,31 @@ export const useFundingPool = (signer, signerAddress) => {
   };
 
 
-    // Function to ensure sufficient allowance for loan repayment
-    const ensureAllowanceForRepayment = async (amount) => {
-      try {
-        if (!contract || !signerAddress) {
-          throw new Error('Contract or signer address not available');
-        }
-
-        const usdcContract = new ethers.Contract(usdcAddress, ERC20ABI.abi, signer);
-        const allowance = await usdcContract.allowance(signerAddress, loanManagerAddress);
-        const parsedAmount = ethers.utils.parseUnits(amount, 6);
-
-        // Check if allowance is sufficient
-        if (allowance.lt(parsedAmount)) {
-          console.log('Allowance check working');
-          const approveTx = await usdcContract.approve(loanManagerAddress, parsedAmount);
-          await approveTx.wait();
-          console.log('Allowance approved');
-        }
-
-        return true;
-      } catch (error) {
-        console.error('Error ensuring allowance for repayment:', error);
-        return false;
+  // Function to ensure sufficient allowance for loan repayment
+  const ensureAllowanceForRepayment = async (amount) => {
+    try {
+      if (!contract || !signerAddress) {
+        throw new Error('Contract or signer address not available');
       }
-    };
+
+      const usdcContract = new ethers.Contract(usdcAddress, ERC20ABI.abi, signer);
+      const allowance = await usdcContract.allowance(signerAddress, loanManagerAddress);
+      const parsedAmount = ethers.utils.parseUnits(amount, 6);
+
+      // Check if allowance is sufficient
+      if (allowance.lt(parsedAmount)) {
+        console.log('Allowance check working');
+        const approveTx = await usdcContract.approve(loanManagerAddress, parsedAmount);
+        await approveTx.wait();
+        console.log('Allowance approved');
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error ensuring allowance for repayment:', error);
+      return false;
+    }
+  };
 
   return {
     getUSDCBalance,
@@ -254,6 +343,7 @@ export const useFundingPool = (signer, signerAddress) => {
     payInterest,
     transferAllUSDC,
     approveLoanManager,
-    ensureAllowanceForRepayment
+    ensureAllowanceForRepayment,
+    events
   };
 };

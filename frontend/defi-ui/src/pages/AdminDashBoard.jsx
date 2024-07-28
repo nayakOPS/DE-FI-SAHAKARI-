@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { ethers } from "ethers";
 import Navigation from "../components/Navigations";
 import Modal from "../components/AdminDahBoard/Modal";
+import TransactionHash from "../components/TransactionHash";
 
 const AdminDashboard = () => {
   const { signer, account } = useWeb3();
@@ -31,7 +32,8 @@ const AdminDashboard = () => {
     }
   }, [contract]);
 
-
+  console.log("Maybe array of the loans", Object.values(loanDetails))
+  console.log("Loan Details", loanDetails)
   const openModal = (member) => {
     console.log('opening for member', member)
     handleGetLoans(member);
@@ -182,133 +184,137 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="w-5/6 m-auto min-h-screen">
-      <Navigation />
-      <div className="mt-8 py-4 h-full">
-        <h1 className="text-3xl text-teal-200 font-bold mb-12">Admin Dashboard</h1>
-        <div className="grid md:grid-cols-3 gap-4 text-center">
-          <div className="bg-slate-50 rounded-2xl px-12 py-8 text-base text-slate-700 font-bold">
-            <p>{totalUsdc || 'Loading...'}</p>
-            <p>Total USDC Deposited</p>
-          </div>
-          <div className="bg-slate-50 rounded-2xl px-12 py-8 text-slate-700 text-base font-bold">
-            <p className="font">{totalEth || 'Loading...'}</p>
-            <p className="text-base font-bold">Total ETH Deposited</p>
-          </div>
-          <div>
-            <button
-              onClick={handleGoToAdminLoanManagementDashboard}
-              className="block w-full h-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-            >Accept Member Loan & Disburse</button>
-          </div>
-        </div>
-
-        <div className="relative overflow-x-auto shadow-md sm:rounded-lg mt-8">
-          <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-            <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-              <tr>
-                <th scope="col" className="text-center px-6 py-3">
-                  S.N
-                </th>
-                <th scope="col" className="text-center px-6 py-3">
-                  Address
-                </th>
-                <th scope="col" className="text-center px-6 py-3">
-                  Member Name
-                </th>
-                <th scope="col" className="text-center px-6 py-3">
-                  <span >Action</span>
-                </th>
-                <th scope="col" className="text-center px-6 py-3">
-                  <span>Member Details</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {members.length === 0 ? (
-                <tr>
-                  <td colSpan="5" className="px-6 py-4 text-center">No members found.</td>
-                </tr>
-              ) : (
-                members.map((member, index) => (
-
-                  <tr
-                    key={index}
-                    className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
-                  >
-
-                    <th
-                      scope="row"
-                      className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
-                    >
-                      {index + 1}
-                    </th>
-                    <td className="px-6 py-4">{member.memberAddress}</td>
-                    <td className="px-6 py-4">{member.name}</td>
-                    <td className="px-6 py-4 text-left">
-                      <button
-                        onClick={() => openModal(member.memberAddress)}
-                        className="hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300"
-                      >
-                        Loan Details
-                      </button>
-                    </td>
-                    <td>
-                      <button
-                        className="hover:bg-blue-800 focus:ring-4 mx-4 focus:outline-none focus:ring-blue-300"
-                        onClick={() => {
-                          openMemberModal({
-                            memberAddress: member.memberAddress,
-                            name: member.name,
-                            isRegistered: member.isRegistered
-                          })
-                        }}
-                      >Get Member Details</button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-          <Modal isOpen={memberModal} onClose={closeMemberModal} title="Member Details">
-        {selectedMember && (
-            <div className="text-black">
-              <p>Name: {selectedMember.name}</p>
-              <p>Address: {selectedMember.memberAddress}</p>
-              <p>Registered: {selectedMember.isRegistered ? "Yes" : "No"}</p>
-            </div>
-        )}
-          </Modal>
-
-        {selectedMember && (
-          <Modal isOpen={isModalOpen} onClose={closeModal} title="Loan Details">
-            {loanDetails[selectedMember] && loanDetails[selectedMember].length !== 0 ? (
-              <div className="text-black text-sm">
-                {loanDetails[selectedMember] ? (
-                  loanDetails[selectedMember].map((loan, idx) => (
-                    <div key={idx}>
-                      <p>Loan Index: {loan.LoanIndex + 1}</p>
-                      <p>Loan Amount: {loan.amount} USDC</p>
-                      <p>ETH Collateral: {loan.ethCollateral} ETH</p>
-                      <p>Repayment Amount: {loan.repaymentAmount} USDC</p>
-                      <p>Due Date: {loan.dueDate}</p>
-                      <p>Approved: {loan.isApproved ? "Yes" : "No"}</p>
-                      <p>Disbursed: {loan.isDisbursed ? "Yes" : "No"}</p>
-                      <p>Repaid: {loan.isRepaid ? "Yes" : "No"}</p>
-                    </div>
-                  ))
-                ) : (
-                  <p>Not requested for loan</p>
-                )}
+    <div className='bg-black bg-opacity-90'>
+      <div className="w-5/6 m-auto min-h-screen">
+        <Navigation />
+        {account === '0x73fE2b14b3a53778F3F1bd2b243440995C4B68a4' || "0xd5bd2adc0cb6c90e8803fae0e42cda55f9fd4ee7" ?
+          <div className="mt-8 py-4 h-full">
+            <h1 className="text-3xl text-teal-200 font-bold mb-12">Admin Dashboard</h1>
+            <div className="grid md:grid-cols-3 gap-4 text-center">
+              <div className="bg-slate-50 rounded-2xl px-12 py-8 text-base text-slate-700 font-bold">
+                <p>{totalUsdc || 'Loading...'}</p>
+                <p>Total USDC Deposited</p>
               </div>
-            ) : (
-              <p className="text-black text-base">Not requested for loan</p>
-            )}
+              <div className="bg-slate-50 rounded-2xl px-12 py-8 text-slate-700 text-base font-bold">
+                <p className="font">{totalEth || 'Loading...'}</p>
+                <p className="text-base font-bold">Total ETH Deposited</p>
+              </div>
+              <div>
+                <button
+                  onClick={handleGoToAdminLoanManagementDashboard}
+                  className="block w-full h-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                >Accept Member Loan & Disburse</button>
+              </div>
+            </div>
 
-          </Modal>
-        )}
+            <div className="relative overflow-x-auto shadow-md sm:rounded-lg mt-8">
+              <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+                <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                  <tr>
+                    <th scope="col" className="px-6 py-3">
+                      S.N
+                    </th>
+                    <th scope="col" className=" px-6 py-3">
+                      Address
+                    </th>
+                    <th scope="col" className="px-6 py-3">
+                      Member Name
+                    </th>
+                    <th scope="col" className="px-6 py-3">
+                      <span >Action</span>
+                    </th>
+                    <th scope="col" className="px-6 py-3">
+                      <span>Member Details</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {members.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" className="px-6 py-4 ">No members found.</td>
+                    </tr>
+                  ) : (
+                    members.map((member, index) => (
+
+                      <tr
+                        key={index}
+                        className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                      >
+
+                        <th
+                          scope="row"
+                          className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
+                        >
+                          {index + 1}
+                        </th>
+                        <td className="px-6 py-4"><TransactionHash hash={member.memberAddress} /></td>
+                        <td className="px-6 py-4">{member.name}</td>
+                        <td className="px-6 py-4">
+                          <button
+                            onClick={() => openModal(member.memberAddress)}
+                            className="hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300"
+                          >
+                            Loan Details
+                          </button>
+                        </td>
+                        <td>
+                          <button
+                            className="hover:bg-blue-800 focus:ring-4 mx-4 focus:outline-none focus:ring-blue-300"
+                            onClick={() => {
+                              openMemberModal({
+                                memberAddress: member.memberAddress,
+                                name: member.name,
+                                isRegistered: member.isRegistered
+                              })
+                            }}
+                          >Get Member Details</button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <Modal isOpen={memberModal} onClose={closeMemberModal} title="Member Details">
+              {selectedMember && (
+                <div className="text-black">
+                  <p>Name: {selectedMember.name}</p>
+                  <p>Address: {selectedMember.memberAddress}</p>
+                  <p>Registered: {selectedMember.isRegistered ? "Yes" : "No"}</p>
+                </div>
+              )}
+            </Modal>
+
+            {selectedMember && (
+              <Modal isOpen={isModalOpen} onClose={closeModal} title="Loan Details">
+                {loanDetails[selectedMember] && loanDetails[selectedMember].length !== 0 ? (
+                  <div className="text-black text-sm">
+                    {loanDetails[selectedMember] ? (
+                      loanDetails[selectedMember].map((loan, idx) => (
+                        <div key={idx}>
+                          <p>Loan Index: {loan.LoanIndex + 1}</p>
+                          <p>Loan Amount: {loan.amount} USDC</p>
+                          <p>ETH Collateral: {loan.ethCollateral} ETH</p>
+                          <p>Repayment Amount: {loan.repaymentAmount} USDC</p>
+                          <p>Due Date: {loan.dueDate}</p>
+                          <p>Approved: {loan.isApproved ? "Yes" : "No"}</p>
+                          <p>Disbursed: {loan.isDisbursed ? "Yes" : "No"}</p>
+                          <p>Repaid: {loan.isRepaid ? "Yes" : "No"}</p>
+                        </div>
+                      ))
+                    ) : (
+                      <p>Not requested for loan</p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-black text-base">Not requested for loan</p>
+                )}
+
+              </Modal>
+            )}
+          </div>
+          : null}
       </div>
     </div>
   );
