@@ -33,7 +33,7 @@ const Dashboard = () => {
   }
 
   const totalEthCollateral = useMemo(() => {
-    return loanDetails.reduce((total, loan) => total + loan.ethCollateral, 0);
+    return loanDetails.reduce((total, loan) => Number(total) + Number(loan.ethCollateral), 0); //typecast the total eth
   }, [loanDetails]);
 
   useEffect(() => {
@@ -206,16 +206,6 @@ const Dashboard = () => {
       <div className='w-5/6 m-auto min-h-screen' >
         <Navigation />
         <div className='mt-16 py-4'>
-          {events.UsdcDeposited.map((event, index) => (
-            <div className='inline'>
-              <Alert status="succcess" message={`${ethers.utils.formatUnits(event.amount, 6)} USDC deposit successfull`} />
-            </div>
-          ))}
-          {events.UsdcWithdrawn.map((event, index) => (
-            <div className='inline'>
-              <Alert status="danger" message={`${ethers.utils.formatUnits(event.amount, 6)} USDC withdrawn`} />
-            </div>
-          ))}
           <div className='flex justify-between'>
             <h1 className="text-3xl text-teal-200 font-bold mb-12 inline">Member Dashboard</h1>
             {events.UsdcDeposited.map((event, index) => (
