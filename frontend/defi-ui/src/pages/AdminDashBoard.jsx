@@ -1,13 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useWeb3 } from "../utils/Web3Provider";
 import { useMemberRegistry } from "../utils/useMemberRegistry";
 import { useFundingPool } from "../utils/useFundingPool";
 import { useLoanManager } from "../utils/useLoanManager";
 import { useNavigate } from 'react-router-dom';
 import { ethers } from "ethers";
+import { lazy } from "react";
 import Navigation from "../components/Navigations";
 import Modal from "../components/AdminDahBoard/Modal";
 import TransactionHash from "../components/TransactionHash";
+
+const Loans = lazy(() => import('../components/AdminDahBoard/LoanLists'))
 
 const AdminDashboard = () => {
   const { signer, account } = useWeb3();
@@ -41,7 +44,7 @@ const AdminDashboard = () => {
     console.log('selected member', selectedMember)
     setModalOpen(true);
   };
-
+  console.log('account', account === '0x73fE2b14b3a53778F3F1bd2b243440995C4B68a4' || account === "0xd5bd2adc0cb6c90e8803fae0e42cda55f9fd4ee7")
   const openMemberModal = (addr) => {
     setSelectedMember(addr);
     setMemberModal(true);
@@ -187,7 +190,7 @@ const AdminDashboard = () => {
     <div className='bg-black bg-opacity-90'>
       <div className="w-5/6 m-auto min-h-screen">
         <Navigation />
-        {account === '0x73fE2b14b3a53778F3F1bd2b243440995C4B68a4' || "0xd5bd2adc0cb6c90e8803fae0e42cda55f9fd4ee7" ?
+        {account === '0x73fE2b14b3a53778F3F1bd2b243440995C4B68a4' || account === "0xd5bd2adc0cb6c90e8803fae0e42cda55f9fd4ee7" ?
           <div className="mt-8 py-4 h-full">
             <h1 className="text-3xl text-teal-200 font-bold mb-12">Admin Dashboard</h1>
             <div className="grid md:grid-cols-3 gap-4 text-center">
@@ -207,7 +210,13 @@ const AdminDashboard = () => {
               </div>
             </div>
 
-            <div className="relative overflow-x-auto shadow-md sm:rounded-lg mt-8">
+            <h2 className="text-2xl text-teal-200 font-bold no-underline mt-8" >Pending Loans</h2>
+            <Suspense fallback={<p>Loan Table Loading</p>}>
+              <Loans members={members} />
+            </Suspense>
+
+            <h2 className="text-2xl text-teal-200 font-bold no-underline mt-8" >Members Overview</h2>
+            <div className="relative overflow-x-auto shadow-md sm:rounded-lg mt-4">
               <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
                 <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                   <tr>

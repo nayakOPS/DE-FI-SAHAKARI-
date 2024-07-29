@@ -234,8 +234,8 @@ const Dashboard = () => {
               <div className='flex flex-row'>
                 <div className='bg-slate-50  rounded-2xl px-12 py-8 text-black w-2/4 mr-4'>
                   <p className='font-bold text-xl'>Member Details</p>
-                  <p>Name: {memberDetails.name}</p>
-                  <p >Address:<span className='text-sm text-slate-800'> {memberDetails.memberAddress}</span></p>
+                  <p className='mt-8 font-bold text-2xl'>{memberDetails.name}</p>
+                  <p ><span className='text-sm text-slate-800'> {memberDetails.memberAddress}</span></p>
                 </div>
                 <div className='text-slate-700 mr-4 flex-1'>
                   {/* <p>Registered: {memberDetails.isRegistered ? 'Yes' : 'No'}</p> */}
@@ -252,8 +252,8 @@ const Dashboard = () => {
 
                 <div>
                   {/* Modal toggle */}
-                  <div className="mb-6 flex flex-col items-center gap-2">
-                    <h3>Withdraw USDC</h3>
+                  <div className="mb-6 flex flex-col gap-2">
+                    <h3 className='font-bold'>Withdraw USDC</h3>
                     <input
                       type="number"
                       value={withdrawAmount}
@@ -350,27 +350,22 @@ const Dashboard = () => {
                   )}
                 </div>
               </div>
-              <div className='flex flex-row items-center'>
+              <div className=' items-center'>
                 <div className='flex flex-col flex-1'>
-                  <p className='mt-8 text-teal-200'>Want to borrow USDC?</p>
-                  <p className='mb-8 text-teal-200 text-sm'>You can get Loan when you deposit ETH, 150% eth collateral is needed in terms of comparison with USDC</p>
+                  <p className='mt-8 text-teal-200 font-bold'>Want to borrow USDC?</p>
+                  <p className='mb-4 text-sm'>You can get Loan when you deposit ETH, 150% eth collateral is needed in terms of comparison with USDC</p>
                 </div>
                 <div>
-                  <button className='text-lg' onClick={handleLoanRequestButton}>Request Loan</button>
+                  <button className='text-white py-2.5 inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800' onClick={handleLoanRequestButton}>Request Loan</button>
                 </div>
               </div>
-              {/* <button onClick={openModal}>Request Loan</button> */}
-              {/* <MemberLoanRequestModal isOpen={isModalOpen} onRequestClose={closeModal} /> */}
-
-
-              <h3 className="text-3xl text-teal-200 font-bold mt-6">Loan Details</h3>
+              <h3 className="text-3xl text-teal-200 font-bold mt-8">Loan Details</h3>
               {loanDetails.length > 0 ? (
                 <div className="relative overflow-x-auto shadow-md sm:rounded-lg mt-8">
                   <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
                     <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                       <tr>
                         <th className="py-2 px-4">Loan Index</th>
-                        <th className="py-2 px-4">Borrower</th>
                         <th className="py-2 px-4">Amount</th>
                         <th className="py-2 px-4">ETH Collateral</th>
                         <th className="py-2 px-4">Repayment Amount</th>
@@ -381,9 +376,8 @@ const Dashboard = () => {
                     </thead>
                     <tbody>
                       {loanDetails.map((loan) => (
-                        <tr key={loan.LoanIndex}>
+                        <tr key={loan.LoanIndex} className='bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600'>
                           <td className="py-2 px-4">{loan.LoanIndex}</td>
-                          <td className="py-2 px-4">{loan.borrower}</td>
                           <td className="py-2 px-4">{loan.amount}</td>
                           <td className="py-2 px-4">{loan.ethCollateral}</td>
                           <td className="py-2 px-4">{loan.repaymentAmount}</td>
@@ -391,7 +385,7 @@ const Dashboard = () => {
                           <td className="py-2 px-4">
                             {loan.isRepaid ? 'Repaid' : loan.isDisbursed ? 'Disbursed' : loan.isApproved ? 'Approved' : 'Pending'}
                           </td>
-                          <td className="py-2 px-4  text-center">
+                          <td className="py-2 px-4 ">
                             {/* {!loan.isRepaid && (
                         <button
                           onClick={() => handleLoanRepayment(loan.borrower, loan.LoanIndex, loan.repaymentAmount)}

@@ -51,7 +51,7 @@ const AdminFinanceProcessor = () => {
       < div className="m-auto min-h-screen px-24" >
         <Navigation />
         {
-          account === "0x73fE2b14b3a53778F3F1bd2b243440995C4B68a4" || "0xd5bd2adc0cb6c90e8803fae0e42cda55f9fd4ee7" ?
+          account === "0x73fE2b14b3a53778F3F1bd2b243440995C4B68a4" || account ==="0xd5bd2adc0cb6c90e8803fae0e42cda55f9fd4ee7" ?
             <>
               <h1 className="text-3xl text-teal-200 font-bold mb-12">Admin Finance Processor</h1>
               <div className='flex flex-row gap-12 text-center my-8'>
@@ -94,7 +94,7 @@ const AdminFinanceProcessor = () => {
                 </div>
               </div>
             </>
-            : null
+            : <>Only accessible to admin</>
         }
       </div>
     </div >
