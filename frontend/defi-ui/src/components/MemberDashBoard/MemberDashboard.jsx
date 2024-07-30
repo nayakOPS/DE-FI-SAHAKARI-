@@ -207,7 +207,7 @@ const Dashboard = () => {
         <Navigation />
         <div className='mt-16 py-4'>
           <div className='flex justify-between'>
-            <h1 className="text-3xl text-teal-200 font-bold mb-12 inline">Member Dashboard</h1>
+            <h1 className="text-3xl font-bold mb-12 inline">Member Dashboard</h1>
             {events.UsdcDeposited.map((event, index) => (
               <div className='inline'>
                 <Alert status="succcess" message={`${ethers.utils.formatUnits(event.amount, 6)} USDC deposit successfull`} />
@@ -222,14 +222,14 @@ const Dashboard = () => {
           {isRegistered ? (
             < >
               <div className='flex flex-row'>
-                <div className='bg-slate-50  rounded-2xl px-12 py-8 text-black w-2/4 mr-4'>
+                <div className='bg-slate-100  rounded-2xl px-12 py-8 text-black w-2/4 mr-4'>
                   <p className='font-bold text-xl'>Member Details</p>
                   <p className='mt-8 font-bold text-2xl'>{memberDetails.name}</p>
                   <p ><span className='text-sm text-slate-800'> {memberDetails.memberAddress}</span></p>
                 </div>
                 <div className='text-slate-700 mr-4 flex-1'>
                   {/* <p>Registered: {memberDetails.isRegistered ? 'Yes' : 'No'}</p> */}
-                  <div className='bg-slate-50 rounded-2xl px-12 py-8 mb-2 text-center'>
+                  <div className='bg-slate-100 rounded-2xl px-12 py-8 mb-2 text-center'>
                     <p>{ethers.utils.formatUnits(usdcBalance, 6)}</p>
                     <p className='font-bold'>USDC Balance</p>
                   </div>
@@ -349,7 +349,7 @@ const Dashboard = () => {
                   <button className='text-white py-2.5 inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800' onClick={handleLoanRequestButton}>Request Loan</button>
                 </div>
               </div>
-              <h3 className="text-3xl text-teal-200 font-bold mt-8">Loan Details</h3>
+              <h3 className="text-2xl 200 font-bold mt-8">Loan Details</h3>
               {loanDetails.length > 0 ? (
                 <div className="relative overflow-x-auto shadow-md sm:rounded-lg mt-8">
                   <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">

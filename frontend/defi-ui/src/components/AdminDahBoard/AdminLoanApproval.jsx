@@ -94,7 +94,7 @@ const AdminLoanApproval = () => {
       <div className="w-5/6 m-auto min-h-screen">
         <Navigation />
         {events.LoanApproved.map((event, index) => (
-          <Alert status="succcess" message={`Loan ${event.index} approved for member ${event.member}`} />
+          <Alert status="success" message={`Loan ${event.index} approved for member ${event.member}`} />
         ))}
         {events.LoanDisbursed.map((event, index) => (
           <Alert status="success" message={`Loan ${event.index} of ${ethers.utils.formatUnits(event.amount, 6)} disbursed for member${event.member}`} />
@@ -114,14 +114,14 @@ const AdminLoanApproval = () => {
               className="block w-3/5 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
             >Fetch Loan Details</button>
           </div>
-          <div className="w-full flex flex-row justify-between">
+          <div className="w-full grid grid-cols-3">
             <div>
               {errorMessage && <p>{errorMessage}</p>}
               {loanDetails.length > 0 ? (
                 <ul className="my-4">
                   {loanDetails.map((loan) => (
-                    <li key={loan.loanIndex}>
-                      <h1>Loan Details:</h1>
+                    <li key={loan.loanIndex} className="border-20050 border-2 mb-10 px-8 py-4">
+                      <h1 className="text-slate-100 text-xl font-bold  mb-4">Loan Details</h1>
                       <p>Loan Amount: {loan.amount} USDC</p>
                       <p>ETH Collateral: {loan.ethCollateral} ETH</p>
                       <p>Repayment Amount: {loan.repaymentAmount} USDC</p>
@@ -151,8 +151,9 @@ const AdminLoanApproval = () => {
               {loanDetails.length > 0 ? (
                 <ul className="my-4">
                   {loanDetails.map((loan) => (
-                    <li key={loan.loanIndex}>
-                      <h1>Loan Disbursed:</h1>
+                    <li key={loan.loanIndex} className="min-h-80">
+                      <div className="border-slate-200 border-2 mt-8 px-8 py-4 ml-8">
+                      <h1 className="text-slate-100 text-xl font-bold  mb-4">Loan Disbursed:</h1>
                       <p>Disbursed:{loan.isDisbursed ? "Yes" : "No"} </p>
                       {!loan.isApproved && (
                         <button onClick={() => handleApproveLoan(loan.borrower, loan.loanIndex)}>
@@ -199,6 +200,7 @@ const AdminLoanApproval = () => {
                           </div>
                         </div>
                       )}
+                      </div>
                     </li>
                   ))}
                 </ul>

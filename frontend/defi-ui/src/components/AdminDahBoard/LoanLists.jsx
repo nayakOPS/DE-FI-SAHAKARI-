@@ -111,7 +111,7 @@ const Loans = ({ members, status }) => {
                     {status != "requests" ?
                         (status === 'standing' ? <tr>
                             <th scope="col" className="px-6 py-3">
-                                LoanIndex
+                                Loan Index
                             </th>
                             <th scope="col" className=" px-6 py-3">
                                 Amount
@@ -178,7 +178,7 @@ const Loans = ({ members, status }) => {
                                         scope="row"
                                         className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
                                     >
-                                        {index + 1}
+                                        {index}
                                     </th>
                                     <td className="px-6 py-4">{loan.amount}</td>
                                     <td className="px-6 py-4"><TransactionHash hash={loan.borrower} /></td>
@@ -203,7 +203,7 @@ const Loans = ({ members, status }) => {
                                             scope="row"
                                             className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
                                         >
-                                            {index + 1}
+                                            {index}
                                         </th>
                                         <td className="px-6 py-4">{loan.amount}</td>
                                         <td className="px-6 py-4"><TransactionHash hash={loan.borrower} /></td>
@@ -228,7 +228,7 @@ const Loans = ({ members, status }) => {
                                             scope="row"
                                             className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white"
                                         >
-                                            {index + 1}
+                                            {index}
                                         </th>
                                         <td className="px-6 py-4">{loan.amount}</td>
                                         <td className="px-6 py-4"><TransactionHash hash={loan.borrower} /></td>

@@ -57,7 +57,7 @@ const HomePage = () => {
                     <button className='mt-4' onClick={handleGoToDashboard}>Go to Dashboard</button>
                   </div>
                 ) : (
-                  <button onClick={handleConnectWallet}>Connect Wallet</button>
+                  <button className='mt-4' onClick={handleConnectWallet}>Connect Wallet</button>
                 )}
               </div>
               <p className='mt-10 text-base'>Supported Assets</p>

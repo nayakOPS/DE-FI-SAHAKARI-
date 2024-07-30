@@ -194,30 +194,35 @@ const AdminDashboard = () => {
         {account === '0x73fE2b14b3a53778F3F1bd2b243440995C4B68a4' || account === "0xd5bd2adc0cb6c90e8803fae0e42cda55f9fd4ee7" ?
           <div className="mt-8 py-4 h-full">
             <h1 className="text-3xl text-teal-200 font-bold mb-12">Admin Dashboard</h1>
-            <div className="grid md:grid-cols-3 gap-4 text-center">
-              <div className="bg-slate-50 rounded-2xl px-12 py-8 text-base text-slate-700 font-bold">
-                <p>{totalUsdc || 'Loading...'}</p>
-                <p>Total USDC Deposited</p>
+            <div className="grid md:grid-cols-3 gap-4 text-center w-4/5">
+              <div className="bg-slate-100 rounded-2xl px-12 py-8 text-base text-slate-700 font-bold">
+                <p>{members.length || 'Loading...'}</p>
+                <p className="text-base ">Total Members</p>
               </div>
-              <div className="bg-slate-50 rounded-2xl px-12 py-8 text-slate-700 text-base font-bold">
+              <div className="bg-slate-100 rounded-2xl px-12 py-8 text-base text-slate-700 font-bold">
+                <p>{totalUsdc || 'Loading...'}</p>
+                <p className="text-base ">Total USDC Deposited</p>
+              </div>
+              <div className="bg-slate-100  rounded-2xl px-12 py-8 text-slate-700 text-base font-bold">
                 <p className="font">{totalEth || 'Loading...'}</p>
                 <p className="text-base font-bold">Total ETH Deposited</p>
               </div>
-              <div>
+            </div>
+
+            <div className="w-80 mt-4">
                 <button
                   onClick={handleGoToAdminLoanManagementDashboard}
                   className="block w-full h-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
                 >Accept Member Loan & Disburse</button>
               </div>
-            </div>
 
-            <h2 className="text-2xl text-teal-200 font-bold no-underline mt-8" >Standing Loans</h2>
+            <h2 className="text-xl text-teal-50 font-bold  mt-12" >Standing Loans</h2>
             <Suspense fallback={<p>Loan Table Loading</p>}>
               <Loans members={members} status="standing" />
             </Suspense>
 
             <div className="flex justify-between">
-              <h2 className="text-2xl text-teal-200 font-bold no-underline mt-8" >Approved Loans</h2>
+              <h2 className="text-xl text-teal-50 font-bold  mt-12" >Approved Loans</h2>
               {events.LoanDisbursed.length > 0 && (
                 <div className='inline'>
                   <Alert
@@ -232,7 +237,7 @@ const AdminDashboard = () => {
             </Suspense>
 
             <div className="flex justify-between">
-              <h2 className="text-2xl text-teal-200 font-bold no-underline mt-8" >Loan Requests</h2>
+              <h2 className="text-xl text-teal-50 font-bold  mt-12" >Loan Requests</h2>
               {events.LoanApproved.length > 0 && (
                 <div className='inline'>
                   <Alert
