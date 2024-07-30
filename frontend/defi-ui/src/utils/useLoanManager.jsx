@@ -22,7 +22,7 @@ export const useLoanManager = (signer) => {
       const handleLoanRequest = (borrower, amount, ethCollateral, repaymentAmount) => {
         setEvents(preEvents => ({
           ...preEvents,
-          LoanRequested: [...preEvents.LoanRequested, { borrower, amount, ethCollateral, repaymentAmounts }]
+          LoanRequested: [...preEvents.LoanRequested, { borrower, amount, ethCollateral, repaymentAmount }]
         }))
       }
       const handleLoanApprove = (borrower, loanIndex) => {

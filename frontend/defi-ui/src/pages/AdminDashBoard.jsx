@@ -9,6 +9,7 @@ import { lazy } from "react";
 import Navigation from "../components/Navigations";
 import Modal from "../components/AdminDahBoard/Modal";
 import TransactionHash from "../components/TransactionHash";
+import Alert from "../components/Alerts";
 
 const Loans = lazy(() => import('../components/AdminDahBoard/LoanLists'))
 
@@ -16,7 +17,7 @@ const AdminDashboard = () => {
   const { signer, account } = useWeb3();
   const contract = useMemberRegistry(signer);
   const { getPendingLoans, approveLoan: approveLoanFromFundingPool, fetchTotalDeposits, totalEth, totalUsdc } = useFundingPool(signer, account);
-  const { loanManagerContract, getLoans } = useLoanManager(signer)
+  const { events, loanManagerContract, getLoans } = useLoanManager(signer)
   const [members, setMembers] = useState([]);
   const [loanDetails, setLoanDetails] = useState({});
   const [memberDetails, setMemberDetails] = useState(null);
@@ -210,10 +211,41 @@ const AdminDashboard = () => {
               </div>
             </div>
 
-            <h2 className="text-2xl text-teal-200 font-bold no-underline mt-8" >Pending Loans</h2>
+            <h2 className="text-2xl text-teal-200 font-bold no-underline mt-8" >Standing Loans</h2>
             <Suspense fallback={<p>Loan Table Loading</p>}>
-              <Loans members={members} />
+              <Loans members={members} status="standing" />
             </Suspense>
+
+            <div className="flex justify-between">
+              <h2 className="text-2xl text-teal-200 font-bold no-underline mt-8" >Approved Loans</h2>
+              {events.LoanDisbursed.length > 0 && (
+                <div className='inline'>
+                  <Alert
+                    status="success"
+                    message={`Loan Disbursed for ${events.LoanDisbursed[0].borrower} of ${events.LoanDisbursed[0].amount}`}
+                  />
+                </div>
+              )}
+            </div>
+            <Suspense fallback={<p>Loan Table Loading</p>}>
+              <Loans members={members} status="requests" />
+            </Suspense>
+
+            <div className="flex justify-between">
+              <h2 className="text-2xl text-teal-200 font-bold no-underline mt-8" >Loan Requests</h2>
+              {events.LoanApproved.length > 0 && (
+                <div className='inline'>
+                  <Alert
+                    status="success"
+                    message={`Loan Approved for ${events.LoanApproved[0].borrower} loan index ${events.LoanApproved[0].LoanIndex}`}
+                  />
+                </div>
+              )}
+            </div>
+            <Suspense fallback={<p>Loan Table Loading</p>}>
+              <Loans members={members} status="accpeted" />
+            </Suspense>
+
 
             <h2 className="text-2xl text-teal-200 font-bold no-underline mt-8" >Members Overview</h2>
             <div className="relative overflow-x-auto shadow-md sm:rounded-lg mt-4">

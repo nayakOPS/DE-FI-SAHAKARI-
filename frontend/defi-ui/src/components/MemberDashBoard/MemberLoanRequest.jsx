@@ -59,10 +59,10 @@ const MemberLoanRequest = () => {
       const ethCollateralBigNumber = ethers.utils.parseEther(ethCollateral);
 
       const txHash = await requestLoan(usdcAmount, ethCollateralBigNumber);
-      alert(`Loan request submitted successfully! Transaction hash: ${txHash}`);
+      // alert(`Loan request submitted successfully! Transaction hash: ${txHash}`);
     } catch (error) {
       console.error('Failed to submit loan request:', error);
-      alert('Failed to submit loan request.');
+      // alert('Failed to submit loan request.');
     }
   };
 
@@ -75,7 +75,7 @@ const MemberLoanRequest = () => {
             <h2 className='text-3xl text-teal-200 font-bold mb-12'>Request a Loan</h2>
             {events.LoanRequested.map((event, index) => (
               <div className='inline'>
-                <Alert status="succcess" message={`${ethers.utils.formatUnits(event.amount, 6)} USDC Loan requested`} />
+                <Alert status="success" message={`${ethers.utils.formatUnits(event.amount, 6)} USDC Loan requested`} />
               </div>
             ))}
           </div>
