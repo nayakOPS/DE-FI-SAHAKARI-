@@ -1,4 +1,5 @@
-# De-FI Sahakari
+# BLOCKCHAIN FELLOWSHIP 2024
+# De-FI Sahakari 
 
 ## Project Overview
 De-FI Sahakari is a groundbreaking initiative that integrates blockchain technology into cooperative models, aiming to enhance financial inclusion and operational efficiency through decentralized solutions. By leveraging Solidity-based smart contracts on the Ethereum blockchain, the platform offers transparent, secure, and efficient cooperative services, empowering individuals and fostering community support.
